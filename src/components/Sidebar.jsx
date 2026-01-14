@@ -149,7 +149,7 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick }) => {
           <div className="w-8 h-8 rounded-full bg-green-500 mr-3 flex items-center justify-center text-sm font-bold text-white">
             SP
           </div>
-          <span className="text-sm font-medium text-gray-700">Sufiya P.</span>
+          <span className="text-sm font-medium text-gray-700">User Name</span>
         </div>
         <button
           onClick={handleLogout}
