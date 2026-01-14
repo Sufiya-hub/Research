@@ -386,7 +386,7 @@ export default function FolderView({
           const isSelected = selectedIds.includes(item.id);
           return (
             <div
-              key={item.id}
+              key={`${item.type}-${item.id}-${Math.random()}`}
               data-item-id={item.id}
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
