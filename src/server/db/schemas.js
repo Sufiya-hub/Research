@@ -25,6 +25,8 @@ export const users = pgTable('users', {
   fullName: text('full_name'),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  reset_token: text('reset_token'),
+  reset_token_expires: timestamp('reset_token_expires'),
 });
 
 /**

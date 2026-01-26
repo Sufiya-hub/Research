@@ -1,0 +1,85 @@
+export const FOLDERS = [
+  {
+    id: 2435,
+    name: 'Inbox',
+    type: 'folder',
+    icon: 'inbox',
+    refFileId: [1, 4, 10],
+  },
+  {
+    id: 2433,
+    name: 'Messages',
+    type: 'folder',
+    icon: 'messages',
+  },
+  {
+    id: 24435,
+    name: 'Audios',
+    icon: 'audios',
+    type: 'folder',
+    refFileId: [43, 235],
+  },
+  {
+    id: 24335,
+    name: 'Videos',
+    icon: 'videos',
+    type: 'folder',
+  },
+  {
+    id: 24935,
+    name: 'Others',
+    icon: 'others',
+    type: 'folder',
+  },
+  {
+    id: 1,
+    name: 'Document.pdf',
+    size: '2 MB',
+    folderId: 2435,
+    type: 'pdf',
+    uploadedAt: '2023-10-01',
+  },
+];
+
+export const FILES = [
+  {
+    id: 1,
+    name: 'Document.pdf',
+    size: '2 MB',
+    folderId: 2435,
+    type: 'pdf',
+    uploadedAt: '2023-10-01',
+  },
+  {
+    id: 4,
+    name: 'Document2.pdf',
+    size: '2 MB',
+    folderId: 2435,
+    type: 'pdf',
+    uploadedAt: '2023-10-01',
+  },
+  {
+    id: 10,
+    name: 'Document3.pdf',
+    size: '2 MB',
+    folderId: 2435,
+    type: 'pdf',
+    uploadedAt: '2023-10-01',
+  },
+  {
+    id: 43,
+    name: 'Document2.pdf',
+    size: '2 MB',
+    folderId: 24435,
+    type: 'pdf',
+    uploadedAt: '2023-10-01',
+  },
+  {
+    id: 235,
+    name: 'Document3.pdf',
+    size: '2 MB',
+    folderId: 24435,
+    type: 'pdf',
+    uploadedAt: '2023-10-01',
+  },
+];

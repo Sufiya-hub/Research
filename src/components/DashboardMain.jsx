@@ -4,6 +4,7 @@
 import React from 'react';
 import CloudManager from './cloud/CloudManager';
 
+import { useSession } from 'next-auth/react';
 const DashboardMain = ({
   filesData,
   setFilesData,
@@ -17,6 +18,8 @@ const DashboardMain = ({
   // which implements the requested Folder Structure and Cloud features.
   // In a real app, we would hoist the CloudManager state up to Dashboard or sync them.
 
+  const { data: session } = useSession();
+  console.log('DashboardMain session:', session);
   return (
     <main className="flex-1 p-4 h-full overflow-hidden flex flex-col">
       {/* We can re-introduce the header here if we want the title 'My Cloud' outside CloudManager, or let CloudManager handle it. */}

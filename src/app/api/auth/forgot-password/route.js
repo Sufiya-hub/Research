@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
-import { employeeTable } from '@/server/db/schemas';
 import { sendEmail } from '@/server/email/sendEmail';
+import { users } from '@/server/db/schemas';
 import {
   resetPasswordHtml,
   resetPasswordText,
@@ -45,10 +45,7 @@ export async function POST(req) {
     }
 
     // Find user by email
-    const users = await db
-      .select()
-      .from(employeeTable)
-      .where(eq(employeeTable.email, email));
+    const users = await db.select().from(users).where(eq(users.email, email));
     const user = users?.[0];
 
     // Always respond 200 to avoid user enumeration

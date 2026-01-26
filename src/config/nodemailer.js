@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-
 const EMAIL = process.env.NODEMAILER_EMAIL;
 const PASS = process.env.NODEMAILER_PASS;
 

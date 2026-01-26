@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
-import { employeeTable } from '@/server/db/schemas';
+import { users } from '@/server/db/schemas';
 
 const db = drizzle(process.env.DATABASE_URL);
 
@@ -36,10 +36,7 @@ export async function POST(req) {
     if (!uid || !email) throw new Error('Invalid token payload');
 
     // Update password for the user
-    await db
-      .update(employeeTable)
-      .set({ password })
-      .where(eq(employeeTable.id, uid));
+    await db.update(users).set({ password }).where(eq(users.id, uid));
 
     return NextResponse.json({ message: 'ok' }, { status: 200 });
   } catch (error) {

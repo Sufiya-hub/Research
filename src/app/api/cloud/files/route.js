@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/server/db';
 import { files } from '@/server/db/schemas';
 
-const getUserId = () => '0386a0e0-fbfd-4fda-ac6d-55a969448e9c';
-
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    console.log('File Upload Session:', session);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { fileName, s3Key, size, type, parentId: parentIdStr } = body;
-    const userId = getUserId();
+    const userId = session.user.id;
 
     let parentId = null;
     if (parentIdStr && parentIdStr !== 'root') {
