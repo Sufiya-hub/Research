@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import DashboardMain from './DashboardMain';
+import { signOut } from 'next-auth/react';
 
 const Dashboard = () => {
   const router = useRouter();
@@ -15,64 +16,6 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   // Note: uploadMessage state is used for the temporary banner only.
   const [uploadMessage, setUploadMessage] = useState({ type: '', text: '' });
-
-  // Mock Data (Assuming files are already classified)
-  const initialFilesData = [
-    {
-      fileName: 'Dat Canonstets',
-      size: 'S12',
-      tags: ['Hot Tier'],
-      type: 'Folder',
-      isUrgent: true,
-      isShared: false,
-      s3Key: 'key_1',
-    },
-    {
-      fileName: 'Hap Tufr',
-      size: 'S1Z, 60',
-      tags: ['Hot Tier'],
-      type: 'Folder',
-      isUrgent: true,
-      isShared: false,
-      s3Key: 'key_2',
-    },
-    {
-      fileName: 'Dast Sdf',
-      size: 'S1Z, 62',
-      tags: ['Hot Tier'],
-      type: 'PDF',
-      isUrgent: false,
-      isShared: false,
-      s3Key: 'key_3',
-    },
-    {
-      fileName: 'AI Procesed',
-      size: 'S1Z, 10',
-      tags: ['Hot Tier'],
-      type: 'Folder',
-      isUrgent: true,
-      isShared: false,
-      s3Key: 'key_4',
-    },
-    {
-      fileName: 'Eiyt Raf',
-      size: 'S1Z, 10',
-      tags: ['Hot Tier'],
-      type: 'PDF',
-      isUrgent: true,
-      isShared: false,
-      s3Key: 'key_5',
-    },
-    {
-      fileName: 'Row Cutbrs',
-      size: 'S1Z, 10',
-      tags: ['Hot Tier'],
-      type: 'PDF',
-      isUrgent: false,
-      isShared: true,
-      s3Key: 'key_6',
-    },
-  ];
 
   useEffect(() => {
     // NOTE: Initial data load should ideally happen in DashboardMain useEffect
@@ -115,7 +58,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    alert('Logging out...');
+    signOut({ callbackUrl: '/' });
   };
 
   return (

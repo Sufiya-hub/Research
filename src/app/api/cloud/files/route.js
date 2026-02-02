@@ -7,7 +7,6 @@ import { files } from '@/server/db/schemas';
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    console.log('File Upload Session:', session);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

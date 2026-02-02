@@ -48,23 +48,11 @@ export default function CloudManager() {
       return;
     }
 
-    // If navigating BACK (via breadcrumb click), logic is handled in Breadcrumb component (passed valid path).
-    // Here we handle "Dive Into" folder.
-    // Check if we are jumping specific path (e.g. from breadcrumb click)
-
-    // But wait, FolderView calls `onNavigate(id)`.
-    // If it's a "back" or "crumb" nav, we need to know.
-    // Let's separate "Dive" vs "Jump".
-
-    // Actually, if we just find the folder in current items, it's a dive.
     const folder = items.find((i) => i.id === folderId);
     if (folder) {
       setBreadcrumbs((prev) => [...prev, { id: folder.id, name: folder.name }]);
       setCurrentFolderId(folderId);
     } else {
-      // Logic for jump (handled by Breadcrumbs onNavigate wrapper)
-      // If we can't find it (maybe we are already there?), we assume it's a reset or jump.
-      // We will handle breadcrumb clicks differently.
       setCurrentFolderId(folderId);
     }
   };
@@ -189,10 +177,6 @@ export default function CloudManager() {
 
   const handlePaste = async () => {
     if (!clipboard.items.length || !clipboard.action) return;
-
-    // Same logic: "copy" means create copy on server. "move" means move.
-    // Backend "move" route exists. Backend "copy" route MISSING.
-    // For now, I will implement "move" fully.
 
     if (clipboard.action === 'move') {
       await handleMove(clipboard.items, currentFolderId); // Paste into current

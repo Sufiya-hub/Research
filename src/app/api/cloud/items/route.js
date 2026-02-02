@@ -2,16 +2,22 @@ import { NextResponse } from 'next/server';
 import { db } from '@/server/db';
 import { folders, files } from '@/server/db/schemas';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth/next';
 
 // Mock User ID - In production use request session
 // Mock User ID - In production use request session
-const getUserId = () => '0386a0e0-fbfd-4fda-ac6d-55a969448e9c';
+// const getUserId = () => '0386a0e0-fbfd-4fda-ac6d-55a969448e9c';
 
 export async function GET(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
     const parentIdAuth = searchParams.get('parentId');
-    const userId = getUserId();
+    const userId = session.user.id;
 
     // Parse parentId: 'root' -> null, or integer
     // Parse parentId: 'root' -> null, or string uuid
