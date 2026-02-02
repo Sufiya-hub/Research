@@ -2,15 +2,21 @@ import { NextResponse } from 'next/server';
 import { db } from '@/server/db';
 import { folders, files } from '@/server/db/schemas';
 import { eq, and, inArray } from 'drizzle-orm';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
-const getUserId = () => '0386a0e0-fbfd-4fda-ac6d-55a969448e9c';
+// const getUserId = () => '0386a0e0-fbfd-4fda-ac6d-55a969448e9c';
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const body = await request.json();
     // ids: array of strings. targetFolderId: string ('root' or id)
     const { ids, targetFolderId: targetIdStr } = body;
-    const userId = getUserId();
+    const userId = session.user.id;
 
     let targetId = null;
     if (targetIdStr && targetIdStr !== 'root') {
@@ -18,6 +24,7 @@ export async function POST(request) {
     }
 
     const { items } = body;
+
     if (!items || !items.length) {
       return NextResponse.json({ success: true }); // No op
     }

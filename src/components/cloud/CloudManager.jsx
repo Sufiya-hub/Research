@@ -149,19 +149,32 @@ export default function CloudManager() {
   };
 
   const handleMove = async (sourceIds, targetFolderId) => {
-    // Need to separate types.
-    const itemsToMove = sourceIds.map((id) => {
-      const item = items.find((i) => i.id === id);
-      return { id, type: item?.type === 'folder' ? 'folder' : 'file' };
-    });
+    try {
+      // Need to separate types.
+      const itemsToMove = sourceIds.map((id) => {
+        const item = items.find((i) => i.id === id);
+        return { id, type: item?.type === 'folder' ? 'folder' : 'file' };
+      });
 
-    await fetch('/api/cloud/move', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: itemsToMove, targetFolderId }),
-    });
+      console.log('Moving items:', itemsToMove, 'to', targetFolderId);
 
-    fetchItems(currentFolderId);
+      const res = await fetch('/api/cloud/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: itemsToMove, targetFolderId }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Move failed');
+      }
+
+      // Always refresh the current folder after move
+      fetchItems(currentFolderId);
+      setSelectedIds([]); // Clear selection after move
+    } catch (e) {
+      console.error('Move Error:', e);
+      alert('Failed to move items');
+    }
   };
 
   // --- Clipboard ---
@@ -176,15 +189,35 @@ export default function CloudManager() {
   };
 
   const handlePaste = async () => {
-    if (!clipboard.items.length || !clipboard.action) return;
+    if (!clipboard.items.length || !clipboard.action) {
+      alert('Nothing to paste');
+      return;
+    }
 
     if (clipboard.action === 'move') {
       await handleMove(clipboard.items, currentFolderId); // Paste into current
       setClipboard({ items: [], action: null });
-    } else {
-      alert(
-        'Copy not fully implemented on backend yet (requires recursion for folders).'
-      );
+    } else if (clipboard.action === 'copy') {
+      try {
+        const res = await fetch('/api/cloud/copy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceIds: clipboard.items,
+            targetFolderId: currentFolderId,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Copy failed');
+        }
+
+        fetchItems(currentFolderId);
+        setClipboard({ items: [], action: null });
+      } catch (e) {
+        console.error('Copy Error:', e);
+        alert('Failed to copy items');
+      }
     }
   };
 

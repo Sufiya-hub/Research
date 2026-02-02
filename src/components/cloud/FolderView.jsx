@@ -134,6 +134,7 @@ export default function FolderView({
 
   // --- Drag and Drop Logic (Native HTML5) ---
   const handleDragStart = (e, item) => {
+    console.log('Drag Start', item);
     e.dataTransfer.setData(
       'application/json',
       JSON.stringify({
@@ -172,12 +173,20 @@ export default function FolderView({
     const data = e.dataTransfer.getData('application/json');
     if (!data) return;
 
-    const { ids } = JSON.parse(data);
+    try {
+      const { ids } = JSON.parse(data);
 
-    // If dropping on a folder, move there.
-    if (targetItem && targetItem.type === 'folder') {
-      if (ids.includes(targetItem.id)) return; // Can't drop into itself
-      onMove(ids, targetItem.id);
+      // If dropping on a folder, move there.
+      if (targetItem && targetItem.type === 'folder') {
+        if (ids.includes(targetItem.id)) {
+          console.warn('Cannot move a folder into itself');
+          return; // Can't drop into itself
+        }
+        onMove(ids, targetItem.id);
+      }
+    } catch (e) {
+      console.error('Drop error:', e);
+      alert('Failed to process drop operation');
     }
     // If dropping on whitespace (targetItem null), do nothing or move to current path (noop)
   };
@@ -276,7 +285,8 @@ export default function FolderView({
                 onPaste();
                 setContextMenu(null);
               }}
-              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+              disabled={!contextMenu || contextMenu.type !== 'bg'}
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
             >
               Paste
             </button>
@@ -386,7 +396,7 @@ export default function FolderView({
           const isSelected = selectedIds.includes(item.id);
           return (
             <div
-              key={`${item.type}-${item.id}-${Math.random()}`}
+              key={`${item.type}-${item.id}`}
               data-item-id={item.id}
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
@@ -394,6 +404,7 @@ export default function FolderView({
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, item)}
               onClick={(e) => {
+                console.log('onClick item', item);
                 e.stopPropagation();
                 if (e.metaKey || e.ctrlKey) {
                   onSelectionChange(item.id, true);
@@ -402,6 +413,7 @@ export default function FolderView({
                 }
               }}
               onDoubleClick={(e) => {
+                console.log('douuble click item', item);
                 e.stopPropagation();
                 if (item.type === 'folder') onNavigate(item.id);
                 else alert('Opening file: ' + item.name);

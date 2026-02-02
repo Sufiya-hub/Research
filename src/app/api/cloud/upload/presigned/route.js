@@ -1,24 +1,19 @@
 import { NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
-// Mock User
-const getUserId = () => '0386a0e0-fbfd-4fda-ac6d-55a969448e9c';
-
-// Initialize S3 Client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { s3Client } from '@/lib/s3';
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const body = await request.json();
     const { fileName, fileType } = body;
-    const userId = getUserId();
+    const userId = session.user.id;
 
     // Generate unique Safe Key
     const uniqueId = crypto.randomUUID();
