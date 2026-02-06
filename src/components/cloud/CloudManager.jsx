@@ -124,29 +124,29 @@ export default function CloudManager() {
     }
   };
 
-  // const triggerIngestion = async (file, userId, fileId) => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append('file', file);
-  //     formData.append('user_id', userId);
-  //     formData.append('file_id', fileId);
+  const triggerIngestion = async (file, userId, fileId) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('user_id', userId);
+      formData.append('file_id', fileId);
 
-  //     const ingestRes = await fetch('http://127.0.0.1:8000/api/v1/ingest', {
-  //       method: 'POST',
-  //       body: formData,
-  //     });
+      const ingestRes = await fetch('http://127.0.0.1:8000/api/v1/ingest', {
+        method: 'POST',
+        body: formData,
+      });
 
-  //     if (ingestRes.ok) {
-  //       const ingestData = await ingestRes.json();
-  //       toast.success(ingestData.message || 'File ingested successfully');
-  //     } else {
-  //       toast.warning('File uploaded, but ingestion failed');
-  //     }
-  //   } catch (ingestErr) {
-  //     console.error('Ingestion error:', ingestErr);
-  //     toast.warning('File uploaded, but ingestion service unavailable');
-  //   }
-  // };
+      if (ingestRes.ok) {
+        const ingestData = await ingestRes.json();
+        toast.success(ingestData.message || 'File ingested successfully');
+      } else {
+        toast.warning('File uploaded, but ingestion failed');
+      }
+    } catch (ingestErr) {
+      console.error('Ingestion error:', ingestErr);
+      toast.warning('File uploaded, but ingestion service unavailable');
+    }
+  };
 
   const handleUpload = async (fileList) => {
     const files = Array.from(fileList);
@@ -187,9 +187,9 @@ export default function CloudManager() {
         const fileId = fileData.id;
 
         // 4. Fire-and-Forget Ingestion (if userId exists)
-        // if (session?.user?.id && fileId) {
-        //   triggerIngestion(file, session.user.id, fileId);
-        // }
+        if (session?.user?.id && fileId) {
+          triggerIngestion(file, session.user.id, fileId);
+        }
       } catch (e) {
         console.error('Upload failed for ' + file.name, e);
         toast.error('Upload failed for ' + file.name);
