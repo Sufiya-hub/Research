@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import FolderView from './FolderView';
 import Breadcrumbs from './Breadcrumbs';
+import { useSession } from 'next-auth/react';
+import { toast } from 'react-toastify';
 
 export default function CloudManager() {
   const [items, setItems] = useState([]);
@@ -15,6 +17,7 @@ export default function CloudManager() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
   const [isLoading, setIsLoading] = useState(false);
+  const { data: session } = useSession();
 
   // --- Fetch Data ---
   const fetchItems = useCallback(
@@ -121,6 +124,30 @@ export default function CloudManager() {
     }
   };
 
+  // const triggerIngestion = async (file, userId, fileId) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('file', file);
+  //     formData.append('user_id', userId);
+  //     formData.append('file_id', fileId);
+
+  //     const ingestRes = await fetch('http://127.0.0.1:8000/api/v1/ingest', {
+  //       method: 'POST',
+  //       body: formData,
+  //     });
+
+  //     if (ingestRes.ok) {
+  //       const ingestData = await ingestRes.json();
+  //       toast.success(ingestData.message || 'File ingested successfully');
+  //     } else {
+  //       toast.warning('File uploaded, but ingestion failed');
+  //     }
+  //   } catch (ingestErr) {
+  //     console.error('Ingestion error:', ingestErr);
+  //     toast.warning('File uploaded, but ingestion service unavailable');
+  //   }
+  // };
+
   const handleUpload = async (fileList) => {
     const files = Array.from(fileList);
 
@@ -143,7 +170,7 @@ export default function CloudManager() {
         });
 
         // 3. Save Metadata
-        await fetch('/api/cloud/files', {
+        const metaRes = await fetch('/api/cloud/files', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -154,9 +181,18 @@ export default function CloudManager() {
             parentId: currentFolderId,
           }),
         });
+
+        if (!metaRes.ok) throw new Error('Failed to save metadata');
+        const fileData = await metaRes.json();
+        const fileId = fileData.id;
+
+        // 4. Fire-and-Forget Ingestion (if userId exists)
+        // if (session?.user?.id && fileId) {
+        //   triggerIngestion(file, session.user.id, fileId);
+        // }
       } catch (e) {
         console.error('Upload failed for ' + file.name, e);
-        alert('Upload failed for ' + file.name);
+        toast.error('Upload failed for ' + file.name);
       }
     }
     fetchItems(currentFolderId, false, true);
