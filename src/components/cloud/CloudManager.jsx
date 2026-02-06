@@ -17,20 +17,34 @@ export default function CloudManager() {
   const [isLoading, setIsLoading] = useState(false);
 
   // --- Fetch Data ---
-  const fetchItems = useCallback(async (folderId, showLoading = true) => {
-    if (showLoading) setIsLoading(true);
-    try {
-      const res = await fetch(`/api/cloud/items?parentId=${folderId}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
-      setItems(data);
-    } catch (e) {
-      console.error('Fetch Error:', e);
-      // Toast error?
-    } finally {
-      if (showLoading) setIsLoading(false);
-    }
-  }, []);
+  const fetchItems = useCallback(
+    async (folderId, showLoading = true, bypassCache = false) => {
+      const cacheKey = `cloud_cache_${folderId}`;
+
+      if (!bypassCache) {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          setItems(JSON.parse(cached));
+          return;
+        }
+      }
+
+      if (showLoading) setIsLoading(true);
+      try {
+        const res = await fetch(`/api/cloud/items?parentId=${folderId}`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        setItems(data);
+        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch (e) {
+        console.error('Fetch Error:', e);
+        // Toast error?
+      } finally {
+        if (showLoading) setIsLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     fetchItems(currentFolderId);
@@ -74,7 +88,7 @@ export default function CloudManager() {
         body: JSON.stringify({ name, parentId: currentFolderId }),
       });
       if (res.ok) {
-        fetchItems(currentFolderId, false);
+        fetchItems(currentFolderId, false, true);
       }
     } catch (e) {
       alert('Error creating folder');
@@ -101,7 +115,7 @@ export default function CloudManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folderIds, fileIds }),
       });
-      if (res.ok) fetchItems(currentFolderId, false);
+      if (res.ok) fetchItems(currentFolderId, false, true);
     } catch (e) {
       alert('Delete failed');
     }
@@ -145,7 +159,7 @@ export default function CloudManager() {
         alert('Upload failed for ' + file.name);
       }
     }
-    fetchItems(currentFolderId, false);
+    fetchItems(currentFolderId, false, true);
   };
   const handleMove = async (sourceIds, targetFolderId) => {
     try {
@@ -168,7 +182,7 @@ export default function CloudManager() {
       }
 
       // Always refresh the current folder after move
-      fetchItems(currentFolderId, false);
+      fetchItems(currentFolderId, false, true);
       setSelectedIds([]); // Clear selection after move
     } catch (e) {
       console.error('Move Error:', e);
@@ -211,7 +225,7 @@ export default function CloudManager() {
           throw new Error('Copy failed');
         }
 
-        fetchItems(currentFolderId, false);
+        fetchItems(currentFolderId, false, true);
         setClipboard({ items: [], action: null });
       } catch (e) {
         console.error('Copy Error:', e);
