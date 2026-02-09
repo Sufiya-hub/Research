@@ -5,6 +5,7 @@ import React from 'react';
 import CloudManager from './cloud/CloudManager';
 
 import { useSession } from 'next-auth/react';
+import Chatbot from './dashboard/Chatbot';
 const DashboardMain = ({
   filesData,
   setFilesData,
@@ -15,7 +16,8 @@ const DashboardMain = ({
 }) => {
   const { data: session } = useSession();
   return (
-    <main className="flex-1 p-4 h-full overflow-hidden flex flex-col">
+    <main className="flex-1 gap-4 p-4 h-full overflow-hidden flex flex-col">
+      <Chatbot />
       <CloudManager />
     </main>
   );

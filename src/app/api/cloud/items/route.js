@@ -72,9 +72,14 @@ export async function GET(request) {
 
 export async function DELETE(request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const body = await request.json();
     const { folderIds, fileIds } = body; // Expect arrays of strings (IDs)
-    const userId = getUserId();
+    const userId = session.user.id;
 
     if (folderIds && folderIds.length > 0) {
       await db

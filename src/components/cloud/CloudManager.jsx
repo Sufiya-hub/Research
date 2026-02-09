@@ -5,6 +5,7 @@ import FolderView from './FolderView';
 import Breadcrumbs from './Breadcrumbs';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-toastify';
+import Chatbot from '../dashboard/Chatbot';
 
 export default function CloudManager() {
   const [items, setItems] = useState([]);
@@ -46,7 +47,7 @@ export default function CloudManager() {
         if (showLoading) setIsLoading(false);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -279,7 +280,7 @@ export default function CloudManager() {
       setSelectedIds((prev) =>
         prev.includes(idOrIds)
           ? prev.filter((i) => i !== idOrIds)
-          : [...prev, idOrIds],
+          : [...prev, idOrIds]
       );
     } else {
       setSelectedIds([idOrIds]);
@@ -291,7 +292,8 @@ export default function CloudManager() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 rounded-xl overflow-hidden shadow-sm border border-gray-200">
+    <div className="flex flex-col h-full bg-gray-50 rounded-xl overflow-hidden shadow-sm border border-gray-200 transtion-all">
+      {/* <Chatbot /> */}
       <div className="bg-white p-4 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
         <Breadcrumbs path={breadcrumbs} onNavigate={handleBreadcrumbNavigate} />
 
@@ -357,7 +359,6 @@ export default function CloudManager() {
           </button>
         </div>
       </div>
-
       <div className="flex-1 overflow-hidden relative">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-400">
@@ -380,7 +381,6 @@ export default function CloudManager() {
           />
         )}
       </div>
-
       <div className="bg-white border-t border-gray-200 px-4 py-2 text-xs text-gray-500 flex justify-between">
         <span>{items.length} items</span>
         <span>{selectedIds.length} selected</span>
