@@ -15,10 +15,24 @@ const DashboardMain = ({
   activeItem,
 }) => {
   const { data: session } = useSession();
+  const [responseGenerated, setResponseGenerated] = React.useState(false);
+
   return (
     <main className="flex-1 gap-4 p-4 h-full overflow-hidden flex flex-col">
-      <Chatbot />
-      <CloudManager />
+      <div
+        className={`transition-all duration-500 ease-in-out ${responseGenerated ? 'flex-1 h-full' : 'h-auto'}`}
+      >
+        <Chatbot
+          onResponseGenerated={() => setResponseGenerated(true)}
+          isFullscreen={responseGenerated}
+        />
+      </div>
+
+      {!responseGenerated && (
+        <div className="flex-1 overflow-hidden transition-all duration-300">
+          <CloudManager />
+        </div>
+      )}
     </main>
   );
 };

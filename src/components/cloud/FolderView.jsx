@@ -81,7 +81,7 @@ export default function FolderView({
         endY: currentY,
       }));
     },
-    [selectionBox]
+    [selectionBox],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -139,7 +139,7 @@ export default function FolderView({
       'application/json',
       JSON.stringify({
         ids: selectedIds.includes(item.id) ? selectedIds : [item.id],
-      })
+      }),
     );
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -269,7 +269,7 @@ export default function FolderView({
             <button
               onClick={() => {
                 onDelete(
-                  selectedIds.length ? selectedIds : [contextMenu.itemId]
+                  selectedIds.length ? selectedIds : [contextMenu.itemId],
                 );
                 setContextMenu(null);
               }}
@@ -317,7 +317,7 @@ export default function FolderView({
               endX: e.clientX,
               endY: e.clientY,
             }
-          : null
+          : null,
       );
     };
 
