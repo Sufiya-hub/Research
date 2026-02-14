@@ -11,14 +11,15 @@ import {
 import AiText from '../AiText';
 import { useSession } from 'next-auth/react';
 
-const Chatbot = ({ onResponseGenerated, isFullscreen }) => {
+const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
   const [relatedFiles, setRelatedFiles] = useState([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [searchMode, setSearchMode] = useState('manual'); // 'smart' | 'manual'
   const { data: session } = useSession();
 
-  const sendQuery = () => {
+  const sendQuery = async () => {
     if (!session?.user?.id) return;
     const myHeaders = new Headers();
     myHeaders.append('Content-Type', 'application/json');
@@ -34,6 +35,25 @@ const Chatbot = ({ onResponseGenerated, isFullscreen }) => {
       body: raw,
       redirect: 'follow',
     };
+
+    // Manual Search Mode
+    if (searchMode === 'manual') {
+      const manualSearchUrl = `/api/cloud/search?query=${encodeURIComponent(query)}`;
+      fetch(manualSearchUrl)
+        .then((res) => res.json())
+        .then((files) => {
+          setResponse(''); // Clear response for manual mode
+          setRelatedFiles(files);
+          if (onResponseGenerated) onResponseGenerated(true);
+        })
+        .catch((err) => {
+          console.error('Manual search failed', err);
+          // Optional: setResponse('Error performing manual search.');
+          // or just clear it
+          setResponse('');
+        });
+      return;
+    }
 
     // MOCK DATA FOR DEVELOPMENT
     const mockData = {
@@ -132,30 +152,76 @@ const Chatbot = ({ onResponseGenerated, isFullscreen }) => {
     return <FaFileLines className="text-gray-500" />;
   };
 
+  const toggleSearchMode = () => {
+    setSearchMode((prev) => (prev === 'smart' ? 'manual' : 'smart'));
+  };
+
+  const handleClose = () => {
+    setQuery('');
+    setResponse('');
+    setRelatedFiles([]);
+    if (onClose) onClose();
+  };
+
   useEffect(() => console.log(response), [response]);
 
   return (
     <div
-      className={`bg-white p-4 shadow-sm border border-gray-200 rounded-xl flex flex-col transition-all duration-300 ${isFullscreen ? 'h-full' : ''}`}
+      className={`w-full bg-white p-4 shadow-sm border border-gray-200 rounded-xl flex flex-col transition-all duration-300 ${isFullscreen ? 'h-full' : ''}`}
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          sendQuery();
-        }}
-        className="flex justify-between items-center bg-gray-100 px-4 py-1 border border-gray-300 rounded-full flex-shrink-0"
-      >
-        <input
-          type="text"
-          placeholder="Enter your prompt.."
-          className="outline-none w-full"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button type="submit" className="p-2 -mr-2 rounded-full bg-white">
-          <FaArrowUp />
-        </button>
-      </form>
+      <div className="flex gap-4 items-center w-full">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendQuery();
+          }}
+          className="flex-1 flex justify-between items-center bg-gray-100 px-4 py-1 border border-gray-300 rounded-full shrink-0"
+        >
+          <div className="flex-1 flex items-center">
+            <input
+              type="text"
+              placeholder={
+                searchMode === 'smart' ? 'Ask AI...' : 'Search files...'
+              }
+              className="outline-none w-full bg-transparent"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              className="p-2 -mr-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            >
+              <FaArrowUp />
+            </button>
+          </div>
+        </form>
+        <div
+          className={`relative w-12 h-6 rounded-full cursor-pointer transition-colors duration-300 ${searchMode === 'smart' ? 'bg-green-600' : 'bg-gray-400'}`}
+          onClick={toggleSearchMode}
+          title={
+            searchMode === 'smart' ? 'Smart Search Mode' : 'Manual Search Mode'
+          }
+        >
+          <div
+            className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${searchMode === 'smart' ? 'translate-x-6' : 'translate-x-0'}`}
+          ></div>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-bold text-gray-500 w-12 text-center select-none">
+            {searchMode === 'smart' ? 'SMART' : 'MANUAL'}
+          </span>
+          {isFullscreen && (
+            <button
+              onClick={handleClose}
+              className="mt-1 text-xs text-red-500 hover:text-red-700 font-semibold underline"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
       {/* CONTAINER FOR RESPONSE */}
       <div
         className={`flex flex-col min-h-0 transition-all duration-300 ease-in-out ${isFullscreen ? 'flex-1 mt-4 overflow-hidden' : ''}`}
@@ -174,15 +240,20 @@ const Chatbot = ({ onResponseGenerated, isFullscreen }) => {
         </div>
 
         {/* RELATED FILES GRID */}
-        {/* RELATED FILES GRID */}
         {relatedFiles.length > 0 && (
           <div
-            className={`mt-4 border-t border-gray-200 pt-3 transition-all duration-500 ease-in-out flex-shrink-0 ${isFullscreen ? 'overflow-y-auto max-h-64' : ''}`}
+            className={`mt-4 border-t border-gray-200 pt-3 transition-all duration-500 ease-in-out shrink-0 ${
+              isFullscreen
+                ? searchMode === 'manual'
+                  ? 'flex-1 overflow-y-auto mt-0 border-t-0'
+                  : 'overflow-y-auto max-h-64'
+                : ''
+            }`}
           >
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Related Files
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {relatedFiles.map((file) => (
                 <div
                   key={file.id}

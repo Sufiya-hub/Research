@@ -24,15 +24,16 @@ const DashboardMain = ({
       >
         <Chatbot
           onResponseGenerated={() => setResponseGenerated(true)}
+          onClose={() => setResponseGenerated(false)}
           isFullscreen={responseGenerated}
         />
       </div>
 
-      {!responseGenerated && (
-        <div className="flex-1 overflow-hidden transition-all duration-300">
-          <CloudManager />
-        </div>
-      )}
+      <div
+        className={`flex-1 overflow-hidden transition-all duration-300 ${responseGenerated ? 'hidden' : ''}`}
+      >
+        <CloudManager />
+      </div>
     </main>
   );
 };
