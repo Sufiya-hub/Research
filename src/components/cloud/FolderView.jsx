@@ -22,6 +22,7 @@ export default function FolderView({
   onCut,
   onPaste,
   onUpload,
+  onShare,
   viewMode = 'grid',
 }) {
   const containerRef = useRef(null);
@@ -245,6 +246,15 @@ export default function FolderView({
               className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
             >
               Open
+            </button>
+            <button
+              onClick={() => {
+                if (onShare) onShare(contextMenu.item.id);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+            >
+              Share
             </button>
             <div className="h-px bg-gray-200 my-1" />
             <button

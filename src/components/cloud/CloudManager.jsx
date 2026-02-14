@@ -6,6 +6,7 @@ import Breadcrumbs from './Breadcrumbs';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-toastify';
 import Chatbot from '../dashboard/Chatbot';
+import ShareModal from './ShareModal';
 
 export default function CloudManager() {
   const [items, setItems] = useState([]);
@@ -18,6 +19,7 @@ export default function CloudManager() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
   const [isLoading, setIsLoading] = useState(false);
+  const [shareModalFile, setShareModalFile] = useState(null);
   const { data: session } = useSession();
 
   // --- Fetch Data ---
@@ -25,7 +27,8 @@ export default function CloudManager() {
     async (folderId, showLoading = true, bypassCache = false) => {
       const cacheKey = `cloud_cache_${folderId}`;
 
-      if (!bypassCache) {
+      // Bypass cache if it's the 'shared' folder to ensure up-to-date shared files
+      if (!bypassCache && folderId !== 'shared') {
         const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
           setItems(JSON.parse(cached));
@@ -35,11 +38,19 @@ export default function CloudManager() {
 
       if (showLoading) setIsLoading(true);
       try {
-        const res = await fetch(`/api/cloud/items?parentId=${folderId}`);
+        let url = `/api/cloud/items?parentId=${folderId}`;
+        if (folderId === 'shared') {
+          url = '/api/cloud/shared';
+        }
+
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         setItems(data);
-        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+        // Only cache if not shared (or handle cache invalidation better for shared)
+        if (folderId !== 'shared') {
+          sessionStorage.setItem(cacheKey, JSON.stringify(data));
+        }
       } catch (e) {
         console.error('Fetch Error:', e);
         // Toast error?
@@ -47,7 +58,7 @@ export default function CloudManager() {
         if (showLoading) setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -70,6 +81,12 @@ export default function CloudManager() {
     if (folder) {
       setBreadcrumbs((prev) => [...prev, { id: folder.id, name: folder.name }]);
       setCurrentFolderId(folderId);
+    } else if (folderId === 'shared') {
+      setBreadcrumbs([
+        { id: 'root', name: 'My Cloud' },
+        { id: 'shared', name: 'Shared with me' },
+      ]);
+      setCurrentFolderId('shared');
     } else {
       setCurrentFolderId(folderId);
     }
@@ -227,6 +244,34 @@ export default function CloudManager() {
     }
   };
 
+  const handleShare = async (fileId, email) => {
+    try {
+      const res = await fetch('/api/cloud/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId, recipientEmail: email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.error || 'Share failed');
+      }
+    } catch (error) {
+      console.error('Share Error:', error);
+      toast.error('Share failed');
+    }
+  };
+
+  const openShareModal = (itemId) => {
+    const item = items.find((i) => i.id === itemId);
+    if (item && item.type !== 'folder') {
+      setShareModalFile(item);
+    } else {
+      toast.info('Folder sharing not implemented yet');
+    }
+  };
+
   // --- Clipboard ---
   const [clipboard, setClipboard] = useState({ items: [], action: null });
 
@@ -280,7 +325,7 @@ export default function CloudManager() {
       setSelectedIds((prev) =>
         prev.includes(idOrIds)
           ? prev.filter((i) => i !== idOrIds)
-          : [...prev, idOrIds]
+          : [...prev, idOrIds],
       );
     } else {
       setSelectedIds([idOrIds]);
@@ -298,6 +343,12 @@ export default function CloudManager() {
         <Breadcrumbs path={breadcrumbs} onNavigate={handleBreadcrumbNavigate} />
 
         <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleNavigate('shared')}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${currentFolderId === 'shared' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          >
+            Shared with me
+          </button>
           <button
             onClick={() => {
               const name = prompt('Enter folder name:');
@@ -378,9 +429,17 @@ export default function CloudManager() {
             onUpload={handleUpload}
             onSelectRange={selectRange}
             viewMode={viewMode}
+            onShare={openShareModal}
           />
         )}
       </div>
+      {shareModalFile && (
+        <ShareModal
+          file={shareModalFile}
+          onClose={() => setShareModalFile(null)}
+          onShare={handleShare}
+        />
+      )}
       <div className="bg-white border-t border-gray-200 px-4 py-2 text-xs text-gray-500 flex justify-between">
         <span>{items.length} items</span>
         <span>{selectedIds.length} selected</span>

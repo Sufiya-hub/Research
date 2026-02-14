@@ -46,7 +46,7 @@ export const folders = pgTable(
   (table) => ({
     userIndex: index('folders_user_id_idx').on(table.userId),
     parentIndex: index('folders_parent_id_idx').on(table.parentId),
-  })
+  }),
 );
 
 /**
@@ -82,7 +82,7 @@ export const files = pgTable(
     // NORMAL index (not unique) → one user can have many files
     userIndex: index('files_user_id_idx').on(table.userId),
     parentIndex: index('files_parent_id_idx').on(table.parentId),
-  })
+  }),
 );
 
 /**
@@ -107,3 +107,29 @@ export const fileRelations = relations(files, ({ one }) => ({
     references: [fileEmbeddings.fileId],
   }),
 }));
+
+/**
+ * Shared Files Table
+ */
+export const sharedFiles = pgTable(
+  'shared_files',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    fileId: uuid('file_id')
+      .notNull()
+      .references(() => files.id, { onDelete: 'cascade' }),
+    sharedByUserId: uuid('shared_by_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    sharedWithUserId: uuid('shared_with_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    sharedWithIndex: index('shared_files_shared_with_idx').on(
+      table.sharedWithUserId,
+    ),
+    fileIndex: index('shared_files_file_id_idx').on(table.fileId),
+  }),
+);
