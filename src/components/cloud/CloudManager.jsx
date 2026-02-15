@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'react-toastify';
 import Chatbot from '../dashboard/Chatbot';
 import ShareModal from './ShareModal';
+import FilePreviewModal from './FilePreviewModal';
 
 export default function CloudManager() {
   const [items, setItems] = useState([]);
@@ -20,6 +21,7 @@ export default function CloudManager() {
   const [viewMode, setViewMode] = useState('grid');
   const [isLoading, setIsLoading] = useState(false);
   const [shareModalFile, setShareModalFile] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
   const { data: session } = useSession();
 
   // --- Fetch Data ---
@@ -272,6 +274,25 @@ export default function CloudManager() {
     }
   };
 
+  const handlePreview = async (file) => {
+    try {
+      const res = await fetch(`/api/cloud/files/${file.id}/view`);
+      if (res.ok) {
+        const data = await res.json();
+        setPreviewFile({
+          ...file,
+          url: data.url,
+          type: data.type || file.type,
+        });
+      } else {
+        toast.error('Failed to load preview');
+      }
+    } catch (e) {
+      console.error('Preview error:', e);
+      toast.error('Failed to load preview');
+    }
+  };
+
   // --- Clipboard ---
   const [clipboard, setClipboard] = useState({ items: [], action: null });
 
@@ -430,6 +451,7 @@ export default function CloudManager() {
             onSelectRange={selectRange}
             viewMode={viewMode}
             onShare={openShareModal}
+            onPreview={handlePreview}
           />
         )}
       </div>
@@ -438,6 +460,12 @@ export default function CloudManager() {
           file={shareModalFile}
           onClose={() => setShareModalFile(null)}
           onShare={handleShare}
+        />
+      )}
+      {previewFile && (
+        <FilePreviewModal
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
         />
       )}
       <div className="bg-white border-t border-gray-200 px-4 py-2 text-xs text-gray-500 flex justify-between">

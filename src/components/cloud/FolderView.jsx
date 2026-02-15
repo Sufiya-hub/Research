@@ -23,6 +23,7 @@ export default function FolderView({
   onPaste,
   onUpload,
   onShare,
+  onPreview,
   viewMode = 'grid',
 }) {
   const containerRef = useRef(null);
@@ -240,7 +241,7 @@ export default function FolderView({
               onClick={() => {
                 if (contextMenu.item.type === 'folder')
                   onNavigate(contextMenu.item.id);
-                else alert('Opening ' + contextMenu.item.name);
+                else if (onPreview) onPreview(contextMenu.item);
                 setContextMenu(null);
               }}
               className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
@@ -426,7 +427,7 @@ export default function FolderView({
                 console.log('douuble click item', item);
                 e.stopPropagation();
                 if (item.type === 'folder') onNavigate(item.id);
-                else alert('Opening file: ' + item.name);
+                else if (onPreview) onPreview(item);
               }}
               onContextMenu={(e) => handleContextMenu(e, item)}
               className={`
