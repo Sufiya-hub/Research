@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FaArrowUp } from 'react-icons/fa6';
 import AiText from '../AiText';
 
-const Chatbot = () => {
+const Chatbot = (userId) => {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
 
@@ -12,9 +12,9 @@ const Chatbot = () => {
 
     const raw = JSON.stringify({
       query,
-      user_id: 'Ktest_user_1',
+      user_id: userId,
     });
-
+    console.log({ userId });
     const requestOptions = {
       method: 'POST',
       headers: myHeaders,

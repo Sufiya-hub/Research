@@ -236,6 +236,22 @@ export default function CloudManager() {
 
   const handleCut = (ids) => {
     setClipboard({ items: ids, action: 'move' });
+    setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
+    setSelectedIds([]);
+  };
+  const handleDownload = async (fileId) => {
+    const res = await fetch(`/api/cloud/files/${fileId}/download`);
+
+    const text = await res.text();
+    console.log('Download response:', res.status, text);
+
+    if (!res.ok || !text) {
+      alert('Download failed');
+      return;
+    }
+
+    const data = JSON.parse(text);
+    window.open(data.url, '_blank');
   };
 
   const handlePaste = async () => {
@@ -374,6 +390,7 @@ export default function CloudManager() {
             onMove={handleMove}
             onCopy={handleCopy}
             onCut={handleCut}
+            onDownload={handleDownload}
             onPaste={handlePaste}
             onUpload={handleUpload}
             onSelectRange={selectRange}

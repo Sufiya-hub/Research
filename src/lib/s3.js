@@ -22,3 +22,15 @@ export const copyS3Object = async (sourceKey, destinationKey) => {
     })
   );
 };
+
+export const getSignedDownloadUrl = async (
+  s3Key,
+  expiresIn = 60 * 5 // 5 minutes
+) => {
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_S3_BUCKET,
+    Key: s3Key,
+  });
+
+  return getSignedUrl(s3Client, command, { expiresIn });
+};

@@ -22,6 +22,7 @@ export default function FolderView({
   onCut,
   onPaste,
   onUpload,
+  onDownload,
   viewMode = 'grid',
 }) {
   const containerRef = useRef(null);
@@ -265,6 +266,19 @@ export default function FolderView({
             >
               Cut
             </button>
+            <button
+              onClick={() => {
+                onDownload(
+                  selectedIds.length ? selectedIds : [contextMenu.itemId]
+                );
+                setContextMenu(null);
+              }}
+              disabled={contextMenu.item.type === 'folder'}
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Download
+            </button>
+
             <div className="h-px bg-gray-200 my-1" />
             <button
               onClick={() => {
@@ -277,6 +291,8 @@ export default function FolderView({
             >
               Delete
             </button>
+
+            <div className="h-px bg-gray-200 my-1" />
           </>
         ) : (
           <>
