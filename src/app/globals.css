@@ -41,3 +41,15 @@ body {
 .selectable-area {
   user-select: none;
 }
+
+/* Fix for react-doc-viewer height issue */
+.doc-viewer-wrapper #react-doc-viewer,
+#msdoc-renderer,
+#proxy-renderer {
+  height: 100% !important;
+}
+
+.doc-viewer-wrapper iframe {
+  height: 100% !important;
+  min-height: 100% !important;
+}
