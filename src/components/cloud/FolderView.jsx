@@ -24,6 +24,7 @@ export default function FolderView({
   onUpload,
   onShare,
   onPreview,
+  onDownload,
   viewMode = 'grid',
 }) {
   const containerRef = useRef(null);
@@ -256,6 +257,15 @@ export default function FolderView({
               className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
             >
               Share
+            </button>
+            <button
+              onClick={() => {
+                if (onDownload) onDownload(contextMenu.item);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+            >
+              Download
             </button>
             <div className="h-px bg-gray-200 my-1" />
             <button

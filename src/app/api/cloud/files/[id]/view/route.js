@@ -16,6 +16,8 @@ export async function GET(request, { params }) {
     }
 
     const { id: fileId } = await params;
+    const { searchParams } = new URL(request.url);
+    const download = searchParams.get('download') === 'true';
     const userId = session.user.id;
 
     // Fetch file if owned by user
@@ -48,10 +50,16 @@ export async function GET(request, { params }) {
     }
 
     // Generate Presigned GET URL
-    const command = new GetObjectCommand({
+    const commandParams = {
       Bucket: process.env.AWS_S3_BUCKET,
       Key: file.s3Key,
-    });
+    };
+
+    if (download) {
+      commandParams.ResponseContentDisposition = `attachment; filename="${file.fileName}"`;
+    }
+
+    const command = new GetObjectCommand(commandParams);
 
     // URL valid for 1 hour
     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });

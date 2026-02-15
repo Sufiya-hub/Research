@@ -293,6 +293,26 @@ export default function CloudManager() {
     }
   };
 
+  const handleDownload = async (file) => {
+    try {
+      const res = await fetch(`/api/cloud/files/${file.id}/view?download=true`);
+      if (res.ok) {
+        const data = await res.json();
+        const link = document.createElement('a');
+        link.href = data.url;
+        link.download = data.name || file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        toast.error('Failed to get download URL');
+      }
+    } catch (e) {
+      console.error('Download error:', e);
+      toast.error('Failed to download file');
+    }
+  };
+
   // --- Clipboard ---
   const [clipboard, setClipboard] = useState({ items: [], action: null });
 
@@ -452,6 +472,7 @@ export default function CloudManager() {
             viewMode={viewMode}
             onShare={openShareModal}
             onPreview={handlePreview}
+            onDownload={handleDownload}
           />
         )}
       </div>
