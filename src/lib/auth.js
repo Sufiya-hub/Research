@@ -81,6 +81,7 @@ export const authOptions = {
         }
 
         user.id = dbUser.id.toString();
+        user.name = dbUser.fullName ?? dbUser.email;
       }
 
       return true;
@@ -93,6 +94,7 @@ export const authOptions = {
       // On initial sign in
       if (user) {
         token.id = user.id;
+        token.name = user.name;
       }
       // Ensure token.id persists on subsequent requests
       return token;
@@ -104,6 +106,7 @@ export const authOptions = {
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id;
+        session.user.name = token.name; // 🔥 ALWAYS DB NAME
       }
       return session;
     },

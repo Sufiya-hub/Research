@@ -62,8 +62,20 @@ const Dashboard = () => {
     setTimeout(() => setUploadMessage({ type: '', text: '' }), 5000);
   };
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/' });
+  // const handleLogout = () => {
+  //   signOut({ callbackUrl: '/' });
+  // };
+  const handleLogout = async () => {
+    try {
+      // Clear any client-side cached data (optional but safe)
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Sign out from NextAuth and redirect to login page
+      await signOut({ redirect: true, callbackUrl: '/' });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
