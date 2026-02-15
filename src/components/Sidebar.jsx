@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-const Sidebar = ({ handleLogout, activeItem, handleItemClick }) => {
+const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
   // State to manage which sections of the sidebar are expanded (optional sub-menus)
   const [expandedSections, setExpandedSections] = useState({});
 
@@ -61,6 +61,16 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick }) => {
       subItems: ['Account & Security', 'API Keys', 'Storage Limits'],
     },
   ];
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) {
+      return parts[0][0].toUpperCase();
+    }
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  };
+
+  const initials = getInitials(userName);
 
   return (
     <aside className="w-64 p-4 bg-white flex flex-col shrink-0 border-r border-gray-100 shadow-md h-screen">
@@ -147,13 +157,15 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick }) => {
       <div className="border-t border-gray-200 pt-4 flex-none">
         <div className="flex items-center mb-4">
           <div className="w-8 h-8 rounded-full bg-green-500 mr-3 flex items-center justify-center text-sm font-bold text-white">
-            SP
+            {initials}
           </div>
-          <span className="text-sm font-medium text-gray-700">User Name</span>
+          <span className="text-sm font-medium text-gray-700">
+            {userName || 'User'}
+          </span>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+          className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors cursor-pointer"
         >
           Logout
         </button>

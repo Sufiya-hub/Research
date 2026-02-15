@@ -6,10 +6,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import DashboardMain from './DashboardMain';
-import { signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 const Dashboard = () => {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
   const [activeItem, setActiveItem] = useState('My Cloud');
 
   const [filesData, setFilesData] = useState([]);
@@ -18,8 +20,11 @@ const Dashboard = () => {
   const [uploadMessage, setUploadMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
+    console.log('Session Data:', session);
+    console.log('Session Status:', status);
     // NOTE: Initial data load should ideally happen in DashboardMain useEffect
-  }, []);
+  }, [session, status]);
+  const userName = session?.user?.name || 'User';
 
   const handleItemClick = (itemName) => {
     setActiveItem(itemName);
@@ -66,6 +71,7 @@ const Dashboard = () => {
       <Sidebar
         handleLogout={handleLogout}
         activeItem={activeItem}
+        userName={userName}
         handleItemClick={handleItemClick}
       />
 

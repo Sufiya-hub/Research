@@ -60,7 +60,7 @@ export default function CloudManager() {
         if (showLoading) setIsLoading(false);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -325,20 +325,6 @@ export default function CloudManager() {
     setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
     setSelectedIds([]);
   };
-  const handleDownload = async (fileId) => {
-    const res = await fetch(`/api/cloud/files/${fileId}/download`);
-
-    const text = await res.text();
-    console.log('Download response:', res.status, text);
-
-    if (!res.ok || !text) {
-      alert('Download failed');
-      return;
-    }
-
-    const data = JSON.parse(text);
-    window.open(data.url, '_blank');
-  };
 
   const handlePaste = async () => {
     if (!clipboard.items.length || !clipboard.action) {
@@ -382,7 +368,7 @@ export default function CloudManager() {
       setSelectedIds((prev) =>
         prev.includes(idOrIds)
           ? prev.filter((i) => i !== idOrIds)
-          : [...prev, idOrIds],
+          : [...prev, idOrIds]
       );
     } else {
       setSelectedIds([idOrIds]);
@@ -402,7 +388,11 @@ export default function CloudManager() {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => handleNavigate('shared')}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${currentFolderId === 'shared' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              currentFolderId === 'shared'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
             Shared with me
           </button>
@@ -489,7 +479,6 @@ export default function CloudManager() {
             viewMode={viewMode}
             onShare={openShareModal}
             onPreview={handlePreview}
-            onDownload={handleDownload}
           />
         )}
       </div>
