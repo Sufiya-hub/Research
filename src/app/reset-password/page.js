@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 
-export default function ResetPasswordPage() {
+const ResetPasswordComponent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token'); // DO NOT decode
@@ -99,5 +99,13 @@ export default function ResetPasswordPage() {
         </button>
       </form>
     </div>
+  );
+};
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordComponent />
+    </Suspense>
   );
 }

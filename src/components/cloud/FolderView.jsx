@@ -22,6 +22,8 @@ export default function FolderView({
   onCut,
   onPaste,
   onUpload,
+  onShare,
+  onPreview,
   onDownload,
   viewMode = 'grid',
 }) {
@@ -82,7 +84,7 @@ export default function FolderView({
         endY: currentY,
       }));
     },
-    [selectionBox]
+    [selectionBox],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -140,7 +142,7 @@ export default function FolderView({
       'application/json',
       JSON.stringify({
         ids: selectedIds.includes(item.id) ? selectedIds : [item.id],
-      })
+      }),
     );
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -240,12 +242,30 @@ export default function FolderView({
               onClick={() => {
                 if (contextMenu.item.type === 'folder')
                   onNavigate(contextMenu.item.id);
-                else alert('Opening ' + contextMenu.item.name);
+                else if (onPreview) onPreview(contextMenu.item);
                 setContextMenu(null);
               }}
               className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
             >
               Open
+            </button>
+            <button
+              onClick={() => {
+                if (onShare) onShare(contextMenu.item.id);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+            >
+              Share
+            </button>
+            <button
+              onClick={() => {
+                if (onDownload) onDownload(contextMenu.item);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+            >
+              Download
             </button>
             <div className="h-px bg-gray-200 my-1" />
             <button
@@ -266,24 +286,11 @@ export default function FolderView({
             >
               Cut
             </button>
-            <button
-              onClick={() => {
-                onDownload(
-                  selectedIds.length ? selectedIds : [contextMenu.itemId]
-                );
-                setContextMenu(null);
-              }}
-              disabled={contextMenu.item.type === 'folder'}
-              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Download
-            </button>
-
             <div className="h-px bg-gray-200 my-1" />
             <button
               onClick={() => {
                 onDelete(
-                  selectedIds.length ? selectedIds : [contextMenu.itemId]
+                  selectedIds.length ? selectedIds : [contextMenu.itemId],
                 );
                 setContextMenu(null);
               }}
@@ -291,8 +298,6 @@ export default function FolderView({
             >
               Delete
             </button>
-
-            <div className="h-px bg-gray-200 my-1" />
           </>
         ) : (
           <>
@@ -333,7 +338,7 @@ export default function FolderView({
               endX: e.clientX,
               endY: e.clientY,
             }
-          : null
+          : null,
       );
     };
 
@@ -432,7 +437,7 @@ export default function FolderView({
                 console.log('douuble click item', item);
                 e.stopPropagation();
                 if (item.type === 'folder') onNavigate(item.id);
-                else alert('Opening file: ' + item.name);
+                else if (onPreview) onPreview(item);
               }}
               onContextMenu={(e) => handleContextMenu(e, item)}
               className={`
