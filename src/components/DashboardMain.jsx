@@ -13,6 +13,7 @@ const DashboardMain = ({
   uploadMessage,
   handleFileUpload,
   activeItem,
+  setActiveItem,
 }) => {
   const { data: session } = useSession();
   const [responseGenerated, setResponseGenerated] = React.useState(false);
@@ -20,7 +21,9 @@ const DashboardMain = ({
   return (
     <main className="flex-1 gap-4 p-4 h-full overflow-hidden flex flex-col">
       <div
-        className={`transition-all duration-500 ease-in-out ${responseGenerated ? 'flex-1 h-full' : 'h-auto'}`}
+        className={`transition-all duration-500 ease-in-out ${
+          responseGenerated ? 'flex-1 h-full' : 'h-auto'
+        }`}
       >
         <Chatbot
           onResponseGenerated={() => setResponseGenerated(true)}
@@ -30,9 +33,11 @@ const DashboardMain = ({
       </div>
 
       <div
-        className={`flex-1 overflow-hidden transition-all duration-300 ${responseGenerated ? 'hidden' : ''}`}
+        className={`flex-1 overflow-hidden transition-all duration-300 ${
+          responseGenerated ? 'hidden' : ''
+        }`}
       >
-        <CloudManager />
+        <CloudManager activeItem={activeItem} setActiveItem={setActiveItem} />
       </div>
     </main>
   );

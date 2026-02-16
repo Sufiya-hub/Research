@@ -9,7 +9,7 @@ import Chatbot from '../dashboard/Chatbot';
 import ShareModal from './ShareModal';
 import FilePreviewModal from './FilePreviewModal';
 
-export default function CloudManager() {
+export default function CloudManager({ activeItem, setActiveItem }) {
   const [items, setItems] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState('root');
   // Breadcrumbs State: Start with Root
@@ -40,9 +40,19 @@ export default function CloudManager() {
 
       if (showLoading) setIsLoading(true);
       try {
+        // let url = `/api/cloud/items?parentId=${folderId}`;
+        // if (folderId === 'shared') {
+        //   url = '/api/cloud/shared';
+        // }
+
         let url = `/api/cloud/items?parentId=${folderId}`;
+
         if (folderId === 'shared') {
-          url = '/api/cloud/shared';
+          url = '/api/cloud/shared'; // files shared WITH me
+        }
+
+        if (folderId === 'shared-by-me') {
+          url = '/api/cloud/shared-by-me'; // files shared BY me
         }
 
         const res = await fetch(url);
@@ -70,26 +80,72 @@ export default function CloudManager() {
 
   // --- Actions ---
 
+  // const handleNavigate = (folderId) => {
+  //   // Find folder name from current items to update breadcrumbs
+  //   // Note: if folderId is 'root', we reset.
+  //   if (folderId === 'root') {
+  //     setBreadcrumbs([{ id: 'root', name: 'My Cloud' }]);
+  //     setCurrentFolderId('root');
+  //     return;
+  //   }
+
+  //   const folder = items.find((i) => i.id === folderId);
+  //   if (folder) {
+  //     setBreadcrumbs((prev) => [...prev, { id: folder.id, name: folder.name }]);
+  //     setCurrentFolderId(folderId);
+  //   } else if (folderId === 'shared') {
+  //     setBreadcrumbs([
+  //       { id: 'root', name: 'My Cloud' },
+  //       { id: 'shared', name: 'Shared with me' },
+  //     ]);
+  //     setCurrentFolderId('shared');
+  //   } else {
+  //     setCurrentFolderId(folderId);
+  //   }
+  // };
+
   const handleNavigate = (folderId) => {
-    // Find folder name from current items to update breadcrumbs
-    // Note: if folderId is 'root', we reset.
+    if (folderId === currentFolderId) {
+      fetchItems(folderId, true, true); // bypass
+      return;
+    }
+    // 1️⃣ Root Navigation
     if (folderId === 'root') {
       setBreadcrumbs([{ id: 'root', name: 'My Cloud' }]);
       setCurrentFolderId('root');
+      setActiveItem?.('My Cloud');
       return;
     }
 
+    // 2️⃣ Shared With Me
+    if (folderId === 'shared') {
+      setBreadcrumbs([
+        { id: 'root', name: 'My Cloud' },
+        { id: 'shared', name: 'Shared With Me' },
+      ]);
+      setCurrentFolderId('shared');
+      setActiveItem?.('Shared With Me');
+      return;
+    }
+
+    // 3️⃣ Shared By Me
+    if (folderId === 'shared-by-me') {
+      setBreadcrumbs([
+        { id: 'root', name: 'My Cloud' },
+        { id: 'shared-by-me', name: 'Shared By Me' },
+      ]);
+      setCurrentFolderId('shared-by-me');
+      setActiveItem?.('Shared By Me');
+      return;
+    }
+
+    // 4️⃣ Normal Folder Navigation
     const folder = items.find((i) => i.id === folderId);
     if (folder) {
       setBreadcrumbs((prev) => [...prev, { id: folder.id, name: folder.name }]);
       setCurrentFolderId(folderId);
-    } else if (folderId === 'shared') {
-      setBreadcrumbs([
-        { id: 'root', name: 'My Cloud' },
-        { id: 'shared', name: 'Shared with me' },
-      ]);
-      setCurrentFolderId('shared');
     } else {
+      // Fallback safety
       setCurrentFolderId(folderId);
     }
   };
@@ -378,6 +434,22 @@ export default function CloudManager() {
   const selectRange = (ids) => {
     setSelectedIds(ids);
   };
+
+  useEffect(() => {
+    if (!activeItem) return;
+
+    if (activeItem === 'My Cloud') {
+      handleNavigate('root');
+    }
+
+    if (activeItem === 'Shared With Me') {
+      handleNavigate('shared'); // already implemented API /api/cloud/shared
+    }
+
+    if (activeItem === 'Shared By Me') {
+      handleNavigate('shared-by-me'); // NEW route
+    }
+  }, [activeItem]);
 
   return (
     <div className="flex flex-col h-full bg-gray-50 rounded-xl overflow-hidden shadow-sm border border-gray-200 transtion-all">
