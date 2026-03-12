@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import Chatbot from '../dashboard/Chatbot';
 import ShareModal from './ShareModal';
 import FilePreviewModal from './FilePreviewModal';
+import OrgShareModal from './OrgShareModal';
 
 export default function CloudManager({ activeSidebarItem }) {
   const [items, setItems] = useState([]);
@@ -22,6 +23,7 @@ export default function CloudManager({ activeSidebarItem }) {
   const [isLoading, setIsLoading] = useState(false);
   const [shareModalFile, setShareModalFile] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
+  const [orgShareFile, setOrgShareFile] = useState(null);
 
   const { data: session } = useSession();
   const [userOrganizations, setUserOrganizations] = useState([]);
@@ -427,50 +429,11 @@ export default function CloudManager({ activeSidebarItem }) {
   };
 
   const handleAddToOrganization = async (file) => {
-    try {
-      if (!userOrganizations.length) {
-        toast.info('You are not a member of any organizations yet.');
-        return;
-      }
-
-      let chosenOrg = userOrganizations[0];
-
-      if (userOrganizations.length > 1) {
-        const message =
-          'Select an organization number to share this file:\n\n' +
-          userOrganizations
-            .map(
-              (org, idx) =>
-                `${idx + 1}. ${org.name} (${org.orgKey}) [${org.role}/${org.accessLevel}]`,
-            )
-            .join('\n');
-        const input = prompt(message, '1');
-        if (!input) return;
-        const index = parseInt(input, 10) - 1;
-        if (Number.isNaN(index) || index < 0 || index >= userOrganizations.length) {
-          toast.error('Invalid selection');
-          return;
-        }
-        chosenOrg = userOrganizations[index];
-      }
-
-      const res = await fetch('/api/organizations/files', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId: chosenOrg.id,
-          fileId: file.id,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to add file to organization');
-      }
-      toast.success(`Added to organization "${chosenOrg.name}"`);
-    } catch (e) {
-      console.error('Add to organization error:', e);
-      toast.error(e.message || 'Failed to share file to organization');
+    if (!userOrganizations.length) {
+      toast.info('You are not a member of any organizations yet.');
+      return;
     }
+    setOrgShareFile(file);
   };
 
   const handleCopy = (ids) => {
@@ -642,6 +605,39 @@ export default function CloudManager({ activeSidebarItem }) {
         <FilePreviewModal
           file={previewFile}
           onClose={() => setPreviewFile(null)}
+        />
+      )}
+      {orgShareFile && userOrganizations.length > 0 && (
+        <OrgShareModal
+          file={orgShareFile}
+          organizations={userOrganizations}
+          onClose={() => setOrgShareFile(null)}
+          onConfirm={async (orgIds) => {
+            try {
+              for (const orgId of orgIds) {
+                const res = await fetch('/api/organizations/files', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    organizationId: orgId,
+                    fileId: orgShareFile.id,
+                  }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  throw new Error(
+                    data.error ||
+                      'Failed to add file to one of the organizations',
+                  );
+                }
+              }
+              toast.success('File added to selected organizations');
+              setOrgShareFile(null);
+            } catch (e) {
+              console.error(e);
+              toast.error(e.message || 'Failed to share file to organizations');
+            }
+          }}
         />
       )}
       <div className="bg-white border-t border-gray-200 px-4 py-2 text-xs text-gray-500 flex justify-between">
