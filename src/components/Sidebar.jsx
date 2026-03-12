@@ -24,8 +24,9 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
     {
       name: 'Recents',
       iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-      hasSubMenu: true,
-      subItems: ['Recently Accessed'],
+      hasSubMenu: false,
+      // subItems: ['Recently Accessed', 'Recently Modified'],
+      subItems: [],
     },
     {
       name: 'Shared',

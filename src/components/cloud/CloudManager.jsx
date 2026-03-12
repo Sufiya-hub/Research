@@ -474,22 +474,6 @@ export default function CloudManager({ activeSidebarItem }) {
     setSelectedIds(ids);
   };
 
-  useEffect(() => {
-    if (!activeItem) return;
-
-    if (activeItem === 'My Cloud') {
-      handleNavigate('root');
-    }
-
-    if (activeItem === 'Shared With Me') {
-      handleNavigate('shared'); // already implemented API /api/cloud/shared
-    }
-
-    if (activeItem === 'Shared By Me') {
-      handleNavigate('shared-by-me'); // NEW route
-    }
-  }, [activeItem]);
-
   return (
     <div className="flex flex-col h-full bg-gray-50 rounded-xl overflow-hidden shadow-sm border border-gray-200 transtion-all">
       {/* <Chatbot /> */}
