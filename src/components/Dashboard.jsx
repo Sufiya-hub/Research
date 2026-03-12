@@ -24,6 +24,20 @@ const Dashboard = () => {
     console.log('Session Status:', status);
     // NOTE: Initial data load should ideally happen in DashboardMain useEffect
   }, [session, status]);
+
+  // On first client mount, restore last active item from localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('dashboard_active_item');
+    if (stored) {
+      setActiveItem(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('dashboard_active_item', activeItem);
+  }, [activeItem]);
   const userName = session?.user?.name || 'User';
 
   const handleItemClick = (itemName) => {
