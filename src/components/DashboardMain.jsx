@@ -21,6 +21,9 @@ const DashboardMain = ({
   const { data: session } = useSession();
   const [responseGenerated, setResponseGenerated] = React.useState(false);
 
+  const isOrgDetail = activeItem?.startsWith('Org:');
+  const activeOrgId = isOrgDetail ? activeItem.slice(4) : null;
+
   return (
     <main className="flex-1 gap-4 p-4 h-full overflow-hidden flex flex-col">
       <div
@@ -44,8 +47,8 @@ const DashboardMain = ({
           <AccountSecuritySettings />
         ) : activeItem === 'Storage Limits' ? (
           <StorageLimitsSettings />
-        ) : activeItem === 'Organizations' ? (
-          <OrganizationsPage />
+        ) : activeItem === 'Organizations' || isOrgDetail ? (
+          <OrganizationsPage activeOrgId={activeOrgId} />
         ) : (
           <CloudManager activeSidebarItem={activeItem} />
         )}

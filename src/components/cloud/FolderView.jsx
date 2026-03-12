@@ -27,6 +27,7 @@ export default function FolderView({
   onDownload,
   viewMode = 'grid',
   onToggleFavorite,
+  onAddToOrganization,
 }) {
   const containerRef = useRef(null);
   const [selectionBox, setSelectionBox] = useState(null); // { startX, startY, endX, endY }
@@ -268,6 +269,17 @@ export default function FolderView({
             >
               Download
             </button>
+            {onAddToOrganization && contextMenu.item.type !== 'folder' && (
+              <button
+                onClick={() => {
+                  onAddToOrganization(contextMenu.item);
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+              >
+                Add to organization
+              </button>
+            )}
             {onToggleFavorite && contextMenu.item.type !== 'folder' && (
               <button
                 onClick={() => {

@@ -24,6 +24,7 @@ export default function CloudManager({ activeSidebarItem }) {
   const [previewFile, setPreviewFile] = useState(null);
 
   const { data: session } = useSession();
+  const [userOrganizations, setUserOrganizations] = useState([]);
 
   // Sync sidebar clicks with internal folder state
   useEffect(() => {
@@ -41,6 +42,20 @@ export default function CloudManager({ activeSidebarItem }) {
       }
     }
   }, [activeSidebarItem]);
+
+  useEffect(() => {
+    const loadOrgs = async () => {
+      try {
+        const res = await fetch('/api/organizations');
+        if (!res.ok) return;
+        const data = await res.json();
+        setUserOrganizations(data);
+      } catch (e) {
+        console.error('Failed to load organizations in CloudManager', e);
+      }
+    };
+    loadOrgs();
+  }, []);
 
   // --- Actions ---
 
@@ -411,6 +426,53 @@ export default function CloudManager({ activeSidebarItem }) {
     }
   };
 
+  const handleAddToOrganization = async (file) => {
+    try {
+      if (!userOrganizations.length) {
+        toast.info('You are not a member of any organizations yet.');
+        return;
+      }
+
+      let chosenOrg = userOrganizations[0];
+
+      if (userOrganizations.length > 1) {
+        const message =
+          'Select an organization number to share this file:\n\n' +
+          userOrganizations
+            .map(
+              (org, idx) =>
+                `${idx + 1}. ${org.name} (${org.orgKey}) [${org.role}/${org.accessLevel}]`,
+            )
+            .join('\n');
+        const input = prompt(message, '1');
+        if (!input) return;
+        const index = parseInt(input, 10) - 1;
+        if (Number.isNaN(index) || index < 0 || index >= userOrganizations.length) {
+          toast.error('Invalid selection');
+          return;
+        }
+        chosenOrg = userOrganizations[index];
+      }
+
+      const res = await fetch('/api/organizations/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId: chosenOrg.id,
+          fileId: file.id,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to add file to organization');
+      }
+      toast.success(`Added to organization "${chosenOrg.name}"`);
+    } catch (e) {
+      console.error('Add to organization error:', e);
+      toast.error(e.message || 'Failed to share file to organization');
+    }
+  };
+
   const handleCopy = (ids) => {
     setClipboard({ items: ids, action: 'copy' });
   };
@@ -565,6 +627,7 @@ export default function CloudManager({ activeSidebarItem }) {
             onShare={openShareModal}
             onPreview={handlePreview}
             onToggleFavorite={toggleFavorite}
+            onAddToOrganization={handleAddToOrganization}
           />
         )}
       </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-toastify';
 
-export default function OrganizationsPage() {
+export default function OrganizationsPage({ activeOrgId }) {
   const { data: session } = useSession();
   const [organizations, setOrganizations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +18,8 @@ export default function OrganizationsPage() {
   const [joinLoading, setJoinLoading] = useState(false);
 
   const [invites, setInvites] = useState([]);
+  const [activeOrgDetail, setActiveOrgDetail] = useState(null);
+  const [activeOrgLoading, setActiveOrgLoading] = useState(false);
 
   const loadOrganizations = async () => {
     try {
@@ -49,6 +51,30 @@ export default function OrganizationsPage() {
     loadOrganizations();
     loadInvites();
   }, []);
+
+  useEffect(() => {
+    const loadDetail = async () => {
+      if (!activeOrgId) {
+        setActiveOrgDetail(null);
+        return;
+      }
+      try {
+        setActiveOrgLoading(true);
+        const res = await fetch(`/api/organizations/${activeOrgId}/detail`);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to load organization');
+        }
+        setActiveOrgDetail(data);
+      } catch (e) {
+        console.error(e);
+        toast.error(e.message || 'Failed to load organization');
+      } finally {
+        setActiveOrgLoading(false);
+      }
+    };
+    loadDetail();
+  }, [activeOrgId]);
 
   const handleCreateOrg = async (e) => {
     e.preventDefault();
@@ -142,6 +168,137 @@ export default function OrganizationsPage() {
 
   const currentUserEmail = session?.user?.email || 'you@example.com';
 
+  // When a specific org is active, show ONLY its files + members page
+  if (activeOrgId) {
+    return (
+      <div className="h-full overflow-y-auto rounded-xl bg-gray-50 border border-gray-200 shadow-sm p-4 md:p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+              {activeOrgDetail
+                ? activeOrgDetail.organization.name
+                : 'Organization'}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 max-w-2xl">
+              Shared files and members for this organization.
+            </p>
+          </div>
+        </div>
+
+        {!activeOrgDetail || activeOrgLoading ? (
+          <div className="h-40 flex items-center justify-center text-sm text-gray-400">
+            Loading organization…
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3 lg:col-span-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  Organization files
+                </h2>
+                <span className="text-xs text-gray-400">
+                  {activeOrgDetail.files.length} file
+                  {activeOrgDetail.files.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              {activeOrgDetail.files.length === 0 ? (
+                <div className="h-24 flex flex-col items-center justify-center text-xs text-gray-400">
+                  <p>No files have been shared into this organization yet.</p>
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    From My Cloud, use the context menu &quot;Add to organization&quot; on
+                    a file to share it here.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-xs md:text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          File
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          Type
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          Size
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          Owner
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          Added
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {activeOrgDetail.files.map((f) => (
+                        <tr key={f.id}>
+                          <td className="px-3 py-2 text-gray-800">{f.name}</td>
+                          <td className="px-3 py-2 text-gray-500">{f.type}</td>
+                          <td className="px-3 py-2 text-gray-500">{f.size}</td>
+                          <td className="px-3 py-2 text-gray-500">
+                            {f.ownerName}
+                          </td>
+                          <td className="px-3 py-2 text-gray-400">
+                            {new Date(f.addedAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  Members &amp; access
+                </h2>
+                <span className="text-xs text-gray-400">
+                  {activeOrgDetail.members.length} member
+                  {activeOrgDetail.members.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <ul className="space-y-2 text-xs md:text-sm">
+                {activeOrgDetail.members.map((m) => (
+                  <li
+                    key={m.id}
+                    className="rounded-lg border border-gray-200 px-3 py-2 flex items-start justify-between gap-2"
+                  >
+                    <div>
+                      <p className="text-gray-900">{m.name}</p>
+                      <p className="text-[11px] text-gray-500">{m.email}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        Joined {new Date(m.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+                          m.role === 'admin'
+                            ? 'bg-indigo-50 text-indigo-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {m.role === 'admin' ? 'Admin' : 'Member'}
+                      </span>
+                      <span className="text-[11px] text-gray-600">
+                        Access: {m.accessLevel}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default: overview page (create / join / list)
   return (
     <div className="h-full overflow-y-auto rounded-xl bg-gray-50 border border-gray-200 shadow-sm p-4 md:p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -396,6 +553,129 @@ export default function OrganizationsPage() {
           </div>
         </section>
       </div>
+
+      {activeOrgDetail && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3 lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                Organization files
+              </h2>
+              <span className="text-xs text-gray-400">
+                {activeOrgDetail.files.length} file
+                {activeOrgDetail.files.length === 1 ? '' : 's'}
+              </span>
+            </div>
+            {activeOrgLoading ? (
+              <div className="h-24 flex items-center justify-center text-xs text-gray-400">
+                Loading files...
+              </div>
+            ) : activeOrgDetail.files.length === 0 ? (
+              <div className="h-24 flex flex-col items-center justify-center text-xs text-gray-400">
+                <p>No files have been shared into this organization yet.</p>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  From My Cloud, use the context menu &quot;Add to organization&quot; on
+                  a file to share it here.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-xs md:text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        File
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        Type
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        Size
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        Owner
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        Added
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {activeOrgDetail.files.map((f) => (
+                      <tr key={f.id}>
+                        <td className="px-3 py-2 text-gray-800">{f.name}</td>
+                        <td className="px-3 py-2 text-gray-500">{f.type}</td>
+                        <td className="px-3 py-2 text-gray-500">{f.size}</td>
+                        <td className="px-3 py-2 text-gray-500">
+                          {f.ownerName}
+                        </td>
+                        <td className="px-3 py-2 text-gray-400">
+                          {new Date(f.addedAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                Members &amp; access
+              </h2>
+              <span className="text-xs text-gray-400">
+                {activeOrgDetail.members.length} member
+                {activeOrgDetail.members.length === 1 ? '' : 's'}
+              </span>
+            </div>
+            {activeOrgLoading ? (
+              <div className="h-24 flex items-center justify-center text-xs text-gray-400">
+                Loading members...
+              </div>
+            ) : (
+              <ul className="space-y-2 text-xs md:text-sm">
+                {activeOrgDetail.members.map((m) => (
+                  <li
+                    key={m.id}
+                    className="rounded-lg border border-gray-200 px-3 py-2 flex items-start justify-between gap-2"
+                  >
+                    <div>
+                      <p className="text-gray-900">{m.name}</p>
+                      <p className="text-[11px] text-gray-500">{m.email}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        Joined{' '}
+                        {new Date(m.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+                          m.role === 'admin'
+                            ? 'bg-indigo-50 text-indigo-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {m.role === 'admin' ? 'Admin' : 'Member'}
+                      </span>
+                      <span className="text-[11px] text-gray-600">
+                        Access: {m.accessLevel}
+                      </span>
+                      {activeOrgDetail.membership.role === 'admin' &&
+                        !m.isCurrentUser && (
+                          <span className="text-[11px] text-gray-400">
+                            Access level changes will be added soon.
+                          </span>
+                        )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

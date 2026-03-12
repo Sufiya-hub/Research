@@ -1,10 +1,25 @@
 // components/Sidebar.jsx (Updated to Hide Scrollbar)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
   // State to manage which sections of the sidebar are expanded (optional sub-menus)
   const [expandedSections, setExpandedSections] = useState({});
+  const [organizations, setOrganizations] = useState([]);
+
+  useEffect(() => {
+    const loadOrgs = async () => {
+      try {
+        const res = await fetch('/api/organizations');
+        if (!res.ok) return;
+        const data = await res.json();
+        setOrganizations(data);
+      } catch (e) {
+        console.error('Failed to load organizations for sidebar', e);
+      }
+    };
+    loadOrgs();
+  }, []);
 
   const toggleSection = (name) => {
     setExpandedSections((prev) => ({
@@ -43,9 +58,8 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
     },
     {
       name: 'Organizations',
-      iconPath:
-        'M3 7h18M5 11h14M7 15h10M9 19h6', // simple stacked-lines icon
-      hasSubMenu: false,
+      iconPath: 'M3 7h18M5 11h14M7 15h10M9 19h6', // simple stacked-lines icon
+      hasSubMenu: true,
       subItems: [],
     },
     {
@@ -140,20 +154,35 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
               {/* Sub-Menu Content */}
               {item.hasSubMenu && expandedSections[item.name] && (
                 <div className="ml-6 py-1 space-y-1">
-                  {item.subItems.map((subItem) => (
-                    <a
-                      key={subItem}
-                      href="#"
-                      onClick={() => handleItemClick(subItem)}
-                      className={`block p-2 rounded-lg text-sm transition-colors ${
-                        subItem === activeItem
-                          ? 'bg-green-50 text-green-700 font-medium'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {subItem}
-                    </a>
-                  ))}
+                  {item.name === 'Organizations' && organizations.length > 0
+                    ? organizations.map((org) => (
+                        <a
+                          key={org.id}
+                          href="#"
+                          onClick={() => handleItemClick(`Org:${org.orgKey}`)}
+                          className={`block p-2 rounded-lg text-sm transition-colors ${
+                            activeItem === `Org:${org.orgKey}`
+                              ? 'bg-green-50 text-green-700 font-medium'
+                              : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {org.name}
+                        </a>
+                      ))
+                    : item.subItems.map((subItem) => (
+                        <a
+                          key={subItem}
+                          href="#"
+                          onClick={() => handleItemClick(subItem)}
+                          className={`block p-2 rounded-lg text-sm transition-colors ${
+                            subItem === activeItem
+                              ? 'bg-green-50 text-green-700 font-medium'
+                              : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {subItem}
+                        </a>
+                      ))}
                 </div>
               )}
             </div>
