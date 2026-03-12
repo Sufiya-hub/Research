@@ -26,6 +26,7 @@ export default function FolderView({
   onPreview,
   onDownload,
   viewMode = 'grid',
+  onToggleFavorite,
 }) {
   const containerRef = useRef(null);
   const [selectionBox, setSelectionBox] = useState(null); // { startX, startY, endX, endY }
@@ -267,6 +268,44 @@ export default function FolderView({
             >
               Download
             </button>
+            {onToggleFavorite && contextMenu.item.type !== 'folder' && (
+              <button
+                onClick={() => {
+                  onToggleFavorite(contextMenu.item);
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+              >
+                <span className="inline-flex items-center justify-center">
+                  {contextMenu.item.isFavorite ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      className="w-4 h-4 text-red-500"
+                      fill="currentColor"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.54 0 3.04.99 3.57 2.36h1.87C14.46 4.99 15.96 4 17.5 4 20 4 22 6 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      className="w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
+                      <path d="M12.1 20.29l-.1.1-.11-.1C7.14 15.86 4 12.97 4 9.5 4 7.5 5.5 6 7.5 6c1.54 0 3.04.99 3.57 2.36h1.87C13.46 6.99 14.96 6 16.5 6 18.5 6 20 7.5 20 9.5c0 3.47-3.14 6.36-7.9 10.79z" />
+                    </svg>
+                  )}
+                </span>
+                <span>
+                  {contextMenu.item.isFavorite
+                    ? 'Remove from Favorites'
+                    : 'Add to Favorites'}
+                </span>
+              </button>
+            )}
             <div className="h-px bg-gray-200 my-1" />
             <button
               onClick={() => {
@@ -463,6 +502,14 @@ export default function FolderView({
               <span className="text-[10px] text-gray-400 mt-1">
                 {item.size || (item.type === 'folder' ? 'Folder' : '')}
               </span>
+              {(item.lastAccessedAt || item.updatedAt) && (
+                <span className="text-[9px] text-gray-400 mt-0.5">
+                  {item.lastAccessedAt ? 'Accessed: ' : 'Modified: '}
+                  {new Date(
+                    item.lastAccessedAt || item.updatedAt,
+                  ).toLocaleDateString()}
+                </span>
+              )}
             </div>
           );
         })}

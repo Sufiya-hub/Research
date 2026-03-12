@@ -25,7 +25,7 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
       name: 'Recents',
       iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
       hasSubMenu: true,
-      subItems: ['Recently Accessed', 'Recently Modified'],
+      subItems: ['Recently Accessed'],
     },
     {
       name: 'Shared',
@@ -47,18 +47,18 @@ const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
       hasSubMenu: true,
       subItems: ['Topic Clustering', 'Summarization History'],
     },
-    {
-      name: 'Storage Tiers',
-      iconPath: 'M4 16h16M4 8h16m-5 4h5',
-      hasSubMenu: true,
-      subItems: ['Hot Tier View', 'Cold Tier View', 'Tiering Reports'],
-    },
+    // {
+    //   name: 'Storage Tiers',
+    //   iconPath: 'M4 16h16M4 8h16m-5 4h5',
+    //   hasSubMenu: true,
+    //   subItems: ['Hot Tier View', 'Cold Tier View', 'Tiering Reports'],
+    // },
     {
       name: 'Settings',
       iconPath:
         'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.572-1.065c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35z',
       hasSubMenu: true,
-      subItems: ['Account & Security', 'API Keys', 'Storage Limits'],
+      subItems: ['Account & Security', 'Storage Limits'],
     },
   ];
   const getInitials = (name) => {

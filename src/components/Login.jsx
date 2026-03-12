@@ -160,12 +160,12 @@ const Login = () => {
     }
 
     // Step 2: verify OTP and complete NextAuth sign-in
-    const v = await fetch('/api/auth/verify-login-otp', {
+    const verifyResponse = await fetch('/api/auth/verify-login-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: data.email, code: otp }),
     });
-    if (!v.ok) {
+    if (!verifyResponse.ok) {
       toast.error(<p className="font-semibold">Invalid or expired OTP</p>);
       return;
     }
@@ -200,7 +200,7 @@ const Login = () => {
 
       if (success) {
         setResetMessage(
-          `Success! If '${email}' is found, the reset link has been sent.`
+          `Success! If '${email}' is found, the reset link has been sent.`,
         );
 
         setTimeout(() => {
@@ -209,7 +209,7 @@ const Login = () => {
         }, 5000);
       } else {
         setResetMessage(
-          'Error: Could not send reset link. Please check the email address.'
+          'Error: Could not send reset link. Please check the email address.',
         );
       }
     }, 1500);
@@ -368,7 +368,7 @@ const Login = () => {
           </div>
         </form>
         <div className="text-center text-sm text-gray-600">
-          Don't have an account?
+          Don&apos;t have an account?
           <a
             href="#"
             onClick={navigateToRegister}

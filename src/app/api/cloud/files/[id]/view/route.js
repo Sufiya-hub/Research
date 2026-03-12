@@ -49,6 +49,12 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Update lastAccessedAt
+    await db
+      .update(files)
+      .set({ lastAccessedAt: new Date() })
+      .where(eq(files.id, fileId));
+
     // Generate Presigned GET URL
     const commandParams = {
       Bucket: process.env.AWS_S3_BUCKET,

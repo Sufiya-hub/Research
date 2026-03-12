@@ -132,18 +132,18 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { XMarkIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 export default function FilePreviewModal({ file, onClose }) {
-  if (!file) return null;
-
-  const fileType = file.type?.toLowerCase();
+  const fileType = file?.type?.toLowerCase();
 
   const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(fileType);
   const isAudio = ['mp3', 'wav', 'ogg'].includes(fileType);
 
   // Memoize docs to avoid unnecessary re-renders
   const docs = useMemo(
-    () => [{ uri: file.url, fileType: file.type }],
-    [file.url, file.type]
+    () => [{ uri: file?.url, fileType: file?.type }],
+    [file?.url, file?.type],
   );
+
+  if (!file) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -200,7 +200,7 @@ export default function FilePreviewModal({ file, onClose }) {
               />
             </div>
           ) : (
-            <div className="w-full h-full doc-viewer-wrapper">
+            <div className="w-full h-full doc-viewer-wrapper flex items-center justify-center text-gray-500">
               <DocViewer
                 key={file.url} // 🔥 Forces clean remount per file
                 documents={docs}

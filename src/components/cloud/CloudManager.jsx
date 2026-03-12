@@ -9,7 +9,7 @@ import Chatbot from '../dashboard/Chatbot';
 import ShareModal from './ShareModal';
 import FilePreviewModal from './FilePreviewModal';
 
-export default function CloudManager() {
+export default function CloudManager({ activeSidebarItem }) {
   const [items, setItems] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState('root');
   // Breadcrumbs State: Start with Root
@@ -24,13 +24,86 @@ export default function CloudManager() {
   const [previewFile, setPreviewFile] = useState(null);
   const { data: session } = useSession();
 
+  // Sync sidebar clicks with internal folder state
+  useEffect(() => {
+    if (activeSidebarItem) {
+      if (activeSidebarItem === 'My Cloud') {
+        handleNavigate('root');
+      } else if (activeSidebarItem === 'Favorites') {
+        handleNavigate('favorites');
+      } else if (activeSidebarItem === 'Shared With Me') {
+        handleNavigate('shared');
+      } else if (activeSidebarItem === 'Shared By Me') {
+        handleNavigate('shared-by-me');
+      } else if (activeSidebarItem === 'Recently Accessed') {
+        handleNavigate('Recently Accessed');
+      }
+    }
+  }, [activeSidebarItem]);
+
+  // --- Actions ---
+
+  const handleNavigate = useCallback(
+    (folderId) => {
+      // Find folder name from current items to update breadcrumbs
+      // Note: if folderId is 'root', we reset.
+      if (folderId === 'root') {
+        setBreadcrumbs([{ id: 'root', name: 'My Cloud' }]);
+        setCurrentFolderId('root');
+        return;
+      }
+
+      const folder = items.find((i) => i.id === folderId);
+      if (folder) {
+        setBreadcrumbs((prev) => [
+          ...prev,
+          { id: folder.id, name: folder.name },
+        ]);
+        setCurrentFolderId(folderId);
+      } else if (folderId === 'favorites') {
+        setBreadcrumbs([
+          { id: 'root', name: 'My Cloud' },
+          { id: 'favorites', name: 'Favorites' },
+        ]);
+        setCurrentFolderId('favorites');
+      } else if (folderId === 'shared') {
+        setBreadcrumbs([
+          { id: 'root', name: 'My Cloud' },
+          { id: 'shared', name: 'Shared with me' },
+        ]);
+        setCurrentFolderId('shared');
+      } else if (folderId === 'shared-by-me') {
+        setBreadcrumbs([
+          { id: 'root', name: 'My Cloud' },
+          { id: 'shared-by-me', name: 'Shared by me' },
+        ]);
+        setCurrentFolderId('shared-by-me');
+      } else if (folderId === 'Recently Accessed') {
+        setBreadcrumbs([
+          { id: 'root', name: 'My Cloud' },
+          { id: 'recently-accessed', name: 'Recently Accessed' },
+        ]);
+        setCurrentFolderId('recently-accessed');
+      } else {
+        setCurrentFolderId(folderId);
+      }
+    },
+    [items],
+  );
+
   // --- Fetch Data ---
   const fetchItems = useCallback(
     async (folderId, showLoading = true, bypassCache = false) => {
       const cacheKey = `cloud_cache_${folderId}`;
 
-      // Bypass cache if it's the 'shared' folder to ensure up-to-date shared files
-      if (!bypassCache && folderId !== 'shared') {
+      // Bypass cache for dynamic folders
+      if (
+        !bypassCache &&
+        folderId !== 'favorites' &&
+        folderId !== 'shared' &&
+        folderId !== 'shared-by-me' &&
+        folderId !== 'recently-accessed'
+      ) {
         const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
           setItems(JSON.parse(cached));
@@ -41,26 +114,43 @@ export default function CloudManager() {
       if (showLoading) setIsLoading(true);
       try {
         let url = `/api/cloud/items?parentId=${folderId}`;
-        if (folderId === 'shared') {
+        if (folderId === 'favorites') {
+          url = '/api/cloud/favorites';
+        } else if (folderId === 'shared') {
           url = '/api/cloud/shared';
+        } else if (folderId === 'shared-by-me') {
+          url = '/api/cloud/shared?scope=by-me';
+        } else if (folderId === 'recently-accessed') {
+          url = '/api/cloud/recent?type=accessed';
         }
 
         const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.error('Backend error data:', errData);
+          throw new Error(
+            errData.details || errData.error || 'Failed to fetch',
+          );
+        }
         const data = await res.json();
         setItems(data);
-        // Only cache if not shared (or handle cache invalidation better for shared)
-        if (folderId !== 'shared') {
+        // Only cache standard static folders
+        if (
+          folderId !== 'favorites' &&
+          folderId !== 'shared' &&
+          folderId !== 'shared-by-me' &&
+          folderId !== 'recently-accessed'
+        ) {
           sessionStorage.setItem(cacheKey, JSON.stringify(data));
         }
       } catch (e) {
         console.error('Fetch Error:', e);
-        // Toast error?
+        toast.error(e.message || 'Failed to fetch folder data');
       } finally {
         if (showLoading) setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -69,32 +159,6 @@ export default function CloudManager() {
   }, [currentFolderId, fetchItems]);
 
   // --- Actions ---
-
-  const handleNavigate = (folderId) => {
-    // Find folder name from current items to update breadcrumbs
-    // Note: if folderId is 'root', we reset.
-    if (folderId === 'root') {
-      setBreadcrumbs([{ id: 'root', name: 'My Cloud' }]);
-      setCurrentFolderId('root');
-      return;
-    }
-
-    const folder = items.find((i) => i.id === folderId);
-    if (folder) {
-      setBreadcrumbs((prev) => [...prev, { id: folder.id, name: folder.name }]);
-      setCurrentFolderId(folderId);
-    } else if (folderId === 'shared') {
-      setBreadcrumbs([
-        { id: 'root', name: 'My Cloud' },
-        { id: 'shared', name: 'Shared with me' },
-      ]);
-      setCurrentFolderId('shared');
-    } else {
-      setCurrentFolderId(folderId);
-    }
-  };
-
-  // Breadcrumb specific nav
   const handleBreadcrumbNavigate = (folderId) => {
     const index = breadcrumbs.findIndex((b) => b.id === folderId);
     if (index !== -1) {
@@ -316,6 +380,31 @@ export default function CloudManager() {
   // --- Clipboard ---
   const [clipboard, setClipboard] = useState({ items: [], action: null });
 
+  const toggleFavorite = async (file) => {
+    try {
+      const nextValue = !file.isFavorite;
+      // Optimistic UI update
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === file.id ? { ...item, isFavorite: nextValue } : item,
+        ),
+      );
+
+      const res = await fetch('/api/cloud/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: file.id, isFavorite: nextValue }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update favorite');
+      }
+    } catch (e) {
+      console.error('Favorite toggle error:', e);
+      toast.error('Failed to update favorite');
+    }
+  };
+
   const handleCopy = (ids) => {
     setClipboard({ items: ids, action: 'copy' });
   };
@@ -368,7 +457,7 @@ export default function CloudManager() {
       setSelectedIds((prev) =>
         prev.includes(idOrIds)
           ? prev.filter((i) => i !== idOrIds)
-          : [...prev, idOrIds]
+          : [...prev, idOrIds],
       );
     } else {
       setSelectedIds([idOrIds]);
@@ -386,16 +475,6 @@ export default function CloudManager() {
         <Breadcrumbs path={breadcrumbs} onNavigate={handleBreadcrumbNavigate} />
 
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handleNavigate('shared')}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              currentFolderId === 'shared'
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Shared with me
-          </button>
           <button
             onClick={() => {
               const name = prompt('Enter folder name:');
@@ -479,6 +558,7 @@ export default function CloudManager() {
             viewMode={viewMode}
             onShare={openShareModal}
             onPreview={handlePreview}
+            onToggleFavorite={toggleFavorite}
           />
         )}
       </div>

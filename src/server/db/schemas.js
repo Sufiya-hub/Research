@@ -77,6 +77,8 @@ export const files = pgTable(
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  lastAccessedAt: timestamp('last_accessed_at').defaultNow().notNull(),
+  isFavorite: boolean('is_favorite').default(false).notNull(),
   },
   (table) => ({
     // NORMAL index (not unique) → one user can have many files

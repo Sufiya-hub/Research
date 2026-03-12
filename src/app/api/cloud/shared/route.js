@@ -13,29 +13,51 @@ export async function GET(request) {
     }
 
     const userId = session.user.id;
+    const { searchParams } = new URL(request.url);
+    const scope = searchParams.get('scope') || 'with-me';
 
-    // Fetch shared files with details and owner info
-    const sharedData = await db
-      .select({
-        file: files,
-        sharedBy: users.fullName,
-        sharedAt: sharedFiles.createdAt,
-      })
-      .from(sharedFiles)
-      .innerJoin(files, eq(sharedFiles.fileId, files.id))
-      .innerJoin(users, eq(sharedFiles.sharedByUserId, users.id))
-      .where(eq(sharedFiles.sharedWithUserId, userId));
+    let sharedData;
 
-    const formattedFiles = sharedData.map(({ file, sharedBy, sharedAt }) => ({
-      id: file.id.toString(),
-      name: file.fileName,
-      type: file.type,
-      size: (file.sizeBytes / 1024).toFixed(2) + ' KB',
-      s3Key: file.s3Key,
-      sharedBy: sharedBy, // Add shared info
-      sharedAt: sharedAt,
-      isShared: true, // Flag for UI
-    }));
+    if (scope === 'by-me') {
+      // Files I have shared with others
+      sharedData = await db
+        .select({
+          file: files,
+          sharedWith: users.fullName,
+          sharedAt: sharedFiles.createdAt,
+        })
+        .from(sharedFiles)
+        .innerJoin(files, eq(sharedFiles.fileId, files.id))
+        .innerJoin(users, eq(sharedFiles.sharedWithUserId, users.id))
+        .where(eq(sharedFiles.sharedByUserId, userId));
+    } else {
+      // Default: files shared *with* me
+      sharedData = await db
+        .select({
+          file: files,
+          sharedBy: users.fullName,
+          sharedAt: sharedFiles.createdAt,
+        })
+        .from(sharedFiles)
+        .innerJoin(files, eq(sharedFiles.fileId, files.id))
+        .innerJoin(users, eq(sharedFiles.sharedByUserId, users.id))
+        .where(eq(sharedFiles.sharedWithUserId, userId));
+    }
+
+    const formattedFiles = sharedData.map(
+      ({ file, sharedBy, sharedWith, sharedAt }) => ({
+        id: file.id.toString(),
+        name: file.fileName,
+        type: file.type,
+        size: (file.sizeBytes / 1024).toFixed(2) + ' KB',
+        s3Key: file.s3Key,
+        sharedBy: sharedBy,
+        sharedWith: sharedWith,
+        sharedAt,
+        isShared: true,
+        shareDirection: scope === 'by-me' ? 'sent' : 'received',
+      }),
+    );
 
     return NextResponse.json(formattedFiles);
   } catch (error) {

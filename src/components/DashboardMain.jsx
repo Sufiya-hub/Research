@@ -3,6 +3,8 @@
 
 import React from 'react';
 import CloudManager from './cloud/CloudManager';
+import AccountSecuritySettings from './settings/AccountSecuritySettings';
+import StorageLimitsSettings from './settings/StorageLimitsSettings';
 
 import { useSession } from 'next-auth/react';
 import Chatbot from './dashboard/Chatbot';
@@ -32,7 +34,13 @@ const DashboardMain = ({
       <div
         className={`flex-1 overflow-hidden transition-all duration-300 ${responseGenerated ? 'hidden' : ''}`}
       >
-        <CloudManager />
+        {activeItem === 'Account & Security' ? (
+          <AccountSecuritySettings />
+        ) : activeItem === 'Storage Limits' ? (
+          <StorageLimitsSettings />
+        ) : (
+          <CloudManager activeSidebarItem={activeItem} />
+        )}
       </div>
     </main>
   );

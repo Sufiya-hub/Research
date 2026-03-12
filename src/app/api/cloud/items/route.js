@@ -57,6 +57,9 @@ export async function GET(request) {
         parentId: f.parentId?.toString() || 'root',
         size: (f.sizeBytes / 1024).toFixed(2) + ' KB',
         s3Key: f.s3Key,
+        isFavorite: f.isFavorite,
+        lastAccessedAt: f.lastAccessedAt,
+        updatedAt: f.updatedAt,
       })),
     ];
 

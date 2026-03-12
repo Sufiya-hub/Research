@@ -30,7 +30,7 @@ export default function ShareModal({ file, onClose, onShare }) {
         <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
           <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
             <FaShare className="text-blue-500" />
-            Share "{file.name}"
+            Share &quot;{file?.name}&quot;
           </h3>
           <button
             onClick={onClose}
