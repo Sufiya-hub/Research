@@ -5,6 +5,7 @@ import React from 'react';
 import CloudManager from './cloud/CloudManager';
 import AccountSecuritySettings from './settings/AccountSecuritySettings';
 import StorageLimitsSettings from './settings/StorageLimitsSettings';
+import OrganizationsPage from './settings/OrganizationsPage';
 
 import { useSession } from 'next-auth/react';
 import Chatbot from './dashboard/Chatbot';
@@ -43,6 +44,8 @@ const DashboardMain = ({
           <AccountSecuritySettings />
         ) : activeItem === 'Storage Limits' ? (
           <StorageLimitsSettings />
+        ) : activeItem === 'Organizations' ? (
+          <OrganizationsPage />
         ) : (
           <CloudManager activeSidebarItem={activeItem} />
         )}
