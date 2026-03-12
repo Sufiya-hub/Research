@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-toastify';
+import FilePreviewModal from '../cloud/FilePreviewModal';
 
 export default function OrganizationsPage({ activeOrgId }) {
   const { data: session } = useSession();
@@ -20,6 +21,7 @@ export default function OrganizationsPage({ activeOrgId }) {
   const [invites, setInvites] = useState([]);
   const [activeOrgDetail, setActiveOrgDetail] = useState(null);
   const [activeOrgLoading, setActiveOrgLoading] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
 
   const loadOrganizations = async () => {
     try {
@@ -168,6 +170,127 @@ export default function OrganizationsPage({ activeOrgId }) {
 
   const currentUserEmail = session?.user?.email || 'you@example.com';
 
+  const canAdminister =
+    activeOrgDetail?.membership?.role === 'admin' ||
+    activeOrgDetail?.membership?.accessLevel === 'share_only';
+
+  const handlePreviewOrgFile = async (file) => {
+    try {
+      const res = await fetch(`/api/cloud/files/${file.id}/view`);
+      if (res.ok) {
+        const data = await res.json();
+        setPreviewFile({
+          ...file,
+          url: data.url,
+          type: data.type || file.type,
+        });
+      } else {
+        toast.error('Failed to load preview');
+      }
+    } catch (e) {
+      console.error('Preview error:', e);
+      toast.error('Failed to load preview');
+    }
+  };
+
+  const handleChangeAccess = async (memberId, accessLevel) => {
+    if (!activeOrgDetail) return;
+    try {
+      const orgId = activeOrgDetail.organization.id;
+      const res = await fetch('/api/organizations/members', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId: orgId, memberId, accessLevel }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update access');
+      }
+      setActiveOrgDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              members: prev.members.map((m) =>
+                m.id === memberId ? { ...m, accessLevel } : m,
+              ),
+            }
+          : prev,
+      );
+      toast.success('Access level updated');
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || 'Failed to update access');
+    }
+  };
+
+  const handleOrgUpload = async (fileList) => {
+    if (!activeOrgDetail) return;
+    try {
+      const files = Array.from(fileList);
+      if (!files.length) return;
+
+      for (const file of files) {
+        // 1. Get presigned URL
+        const preRes = await fetch('/api/cloud/upload/presigned', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+        });
+        const { url, key } = await preRes.json();
+
+        // 2. Upload to S3
+        await fetch(url, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type },
+        });
+
+        // 3. Save metadata in user's cloud
+        const metaRes = await fetch('/api/cloud/files', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            s3Key: key,
+            size: file.size,
+            type: file.name.split('.').pop(),
+            parentId: 'root',
+          }),
+        });
+        if (!metaRes.ok) {
+          throw new Error('Failed to save file metadata');
+        }
+        const meta = await metaRes.json();
+
+        // 4. Attach to organization
+        const addRes = await fetch('/api/organizations/files', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organizationId: activeOrgDetail.organization.id,
+            fileId: meta.id,
+          }),
+        });
+        const addData = await addRes.json().catch(() => ({}));
+        if (!addRes.ok) {
+          throw new Error(addData.error || 'Failed to add file to organization');
+        }
+      }
+
+      toast.success('File(s) uploaded to organization');
+
+      // Refresh detail
+      const detailRes = await fetch(`/api/organizations/${activeOrgId}/detail`);
+      const detailData = await detailRes.json();
+      if (detailRes.ok) {
+        setActiveOrgDetail(detailData);
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || 'Failed to upload files to organization');
+    }
+  };
+
   // When a specific org is active, show ONLY its files + members page
   if (activeOrgId) {
     return (
@@ -196,10 +319,37 @@ export default function OrganizationsPage({ activeOrgId }) {
                 <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
                   Organization files
                 </h2>
-                <span className="text-xs text-gray-400">
-                  {activeOrgDetail.files.length} file
-                  {activeOrgDetail.files.length === 1 ? '' : 's'}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-400">
+                    {activeOrgDetail.files.length} file
+                    {activeOrgDetail.files.length === 1 ? '' : 's'}
+                  </span>
+                  {canAdminister && (
+                    <>
+                      <input
+                        id="org-upload-input"
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files?.length) {
+                            handleOrgUpload(e.target.files);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          document.getElementById('org-upload-input')?.click()
+                        }
+                        className="px-3 py-1.5 rounded-md bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 border border-green-100"
+                      >
+                        + Add
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
               {activeOrgDetail.files.length === 0 ? (
                 <div className="h-24 flex flex-col items-center justify-center text-xs text-gray-400">
@@ -234,7 +384,15 @@ export default function OrganizationsPage({ activeOrgId }) {
                     <tbody className="divide-y divide-gray-100">
                       {activeOrgDetail.files.map((f) => (
                         <tr key={f.id}>
-                          <td className="px-3 py-2 text-gray-800">{f.name}</td>
+                          <td className="px-3 py-2 text-gray-800">
+                            <button
+                              type="button"
+                              className="text-left text-blue-600 hover:underline"
+                              onClick={() => handlePreviewOrgFile(f)}
+                            >
+                              {f.name}
+                            </button>
+                          </td>
                           <td className="px-3 py-2 text-gray-500">{f.type}</td>
                           <td className="px-3 py-2 text-gray-500">{f.size}</td>
                           <td className="px-3 py-2 text-gray-500">
@@ -284,15 +442,34 @@ export default function OrganizationsPage({ activeOrgId }) {
                       >
                         {m.role === 'admin' ? 'Admin' : 'Member'}
                       </span>
-                      <span className="text-[11px] text-gray-600">
-                        Access: {m.accessLevel}
-                      </span>
+                      {canAdminister && !m.isCurrentUser ? (
+                        <select
+                          className="text-[11px] border border-gray-200 rounded-md px-1 py-0.5 bg-white text-gray-700"
+                          value={m.accessLevel}
+                          onChange={(e) =>
+                            handleChangeAccess(m.id, e.target.value)
+                          }
+                        >
+                          <option value="view_only">View only</option>
+                          <option value="share_only">Share only</option>
+                        </select>
+                      ) : (
+                        <span className="text-[11px] text-gray-600">
+                          Access: {m.accessLevel}
+                        </span>
+                      )}
                     </div>
                   </li>
                 ))}
               </ul>
             </section>
           </div>
+        )}
+        {previewFile && (
+          <FilePreviewModal
+            file={previewFile}
+            onClose={() => setPreviewFile(null)}
+          />
         )}
       </div>
     );

@@ -90,8 +90,8 @@ export async function GET(_request, context) {
       .where(eq(organizationFiles.organizationId, orgId));
 
     const orgFilesData = fileRows.map(({ orgFile, file, owner }) => ({
-      id: orgFile.id,
-      fileId: file.id,
+    id: file.id, // align with CloudManager's file.id
+    orgFileId: orgFile.id,
       name: file.fileName,
       type: file.type,
       size: (file.sizeBytes / 1024).toFixed(2) + ' KB',

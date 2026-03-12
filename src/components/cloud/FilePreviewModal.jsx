@@ -125,7 +125,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import ReactPlayer from 'react-player';
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
@@ -189,16 +188,16 @@ export default function FilePreviewModal({ file, onClose }) {
 
         {/* Content */}
         <div className="flex-1 bg-gray-50 overflow-y-auto relative flex items-center justify-center">
-          {isVideo || isAudio ? (
-            <div className="w-full h-full bg-black flex items-center justify-center">
-              <ReactPlayer
-                url={file.url}
-                controls
-                width="100%"
-                height="100%"
-                playing
-              />
-            </div>
+          {isVideo ? (
+            <video
+              src={file.url}
+              controls
+              className="w-full h-full bg-black"
+            />
+          ) : isAudio ? (
+            <audio src={file.url} controls className="w-full px-4">
+              Your browser does not support the audio element.
+            </audio>
           ) : (
             <div className="w-full h-full doc-viewer-wrapper flex items-center justify-center text-gray-500">
               <DocViewer
