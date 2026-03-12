@@ -64,7 +64,7 @@ export async function GET(request) {
     console.error('Error fetching shared files:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

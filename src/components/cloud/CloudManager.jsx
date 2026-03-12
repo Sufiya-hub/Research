@@ -22,6 +22,7 @@ export default function CloudManager({ activeSidebarItem }) {
   const [isLoading, setIsLoading] = useState(false);
   const [shareModalFile, setShareModalFile] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
+
   const { data: session } = useSession();
 
   // Sync sidebar clicks with internal folder state
@@ -113,6 +114,11 @@ export default function CloudManager({ activeSidebarItem }) {
 
       if (showLoading) setIsLoading(true);
       try {
+        // let url = `/api/cloud/items?parentId=${folderId}`;
+        // if (folderId === 'shared') {
+        //   url = '/api/cloud/shared';
+        // }
+
         let url = `/api/cloud/items?parentId=${folderId}`;
         if (folderId === 'favorites') {
           url = '/api/cloud/favorites';
@@ -467,6 +473,22 @@ export default function CloudManager({ activeSidebarItem }) {
   const selectRange = (ids) => {
     setSelectedIds(ids);
   };
+
+  useEffect(() => {
+    if (!activeItem) return;
+
+    if (activeItem === 'My Cloud') {
+      handleNavigate('root');
+    }
+
+    if (activeItem === 'Shared With Me') {
+      handleNavigate('shared'); // already implemented API /api/cloud/shared
+    }
+
+    if (activeItem === 'Shared By Me') {
+      handleNavigate('shared-by-me'); // NEW route
+    }
+  }, [activeItem]);
 
   return (
     <div className="flex flex-col h-full bg-gray-50 rounded-xl overflow-hidden shadow-sm border border-gray-200 transtion-all">

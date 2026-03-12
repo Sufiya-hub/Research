@@ -94,6 +94,7 @@ const Dashboard = () => {
         uploadMessage={uploadMessage}
         handleFileUpload={handleFileUpload}
         activeItem={activeItem}
+        setActiveItem={setActiveItem}
       />
     </div>
   );
