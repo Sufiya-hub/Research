@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-toastify';
 import FilePreviewModal from '../cloud/FilePreviewModal';
+import {
+  isImageUploadFile,
+  triggerClipIndex,
+  triggerDocumentIngestion,
+} from '@/lib/uploadIndexing';
 
 export default function OrganizationsPage({ activeOrgId }) {
   const { data: session } = useSession();
@@ -274,6 +279,31 @@ export default function OrganizationsPage({ activeOrgId }) {
         const addData = await addRes.json().catch(() => ({}));
         if (!addRes.ok) {
           throw new Error(addData.error || 'Failed to add file to organization');
+        }
+
+        if (session?.user?.id && meta.id) {
+          if (isImageUploadFile(file)) {
+            triggerClipIndex(file).catch((e) => {
+              console.error('CLIP index error:', e);
+              toast.warning(`Image indexing failed for ${file.name}`);
+            });
+          } else {
+            void (async () => {
+              try {
+                const r = await triggerDocumentIngestion(
+                  file,
+                  session.user.id,
+                  meta.id,
+                );
+                if (!r.ok) {
+                  toast.warning(`Document ingestion failed for ${file.name}`);
+                }
+              } catch (e) {
+                console.error('Ingestion error:', e);
+                toast.warning(`Ingestion unavailable for ${file.name}`);
+              }
+            })();
+          }
         }
       }
 

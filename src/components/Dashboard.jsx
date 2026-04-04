@@ -16,16 +16,8 @@ const Dashboard = () => {
 
   const [filesData, setFilesData] = useState([]);
   const [uploading, setUploading] = useState(false);
-  // Note: uploadMessage state is used for the temporary banner only.
   const [uploadMessage, setUploadMessage] = useState({ type: '', text: '' });
 
-  useEffect(() => {
-    console.log('Session Data:', session);
-    console.log('Session Status:', status);
-    // NOTE: Initial data load should ideally happen in DashboardMain useEffect
-  }, [session, status]);
-
-  // On first client mount, restore last active item from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const stored = localStorage.getItem('dashboard_active_item');

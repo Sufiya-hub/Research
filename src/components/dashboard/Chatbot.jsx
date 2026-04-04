@@ -101,6 +101,7 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
     const smartRaw = isClipSearch
       ? JSON.stringify({
           query: query,
+          user_id: session?.user?.id,
           top_k: 5,
         })
       : raw;
@@ -159,7 +160,28 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
       });
 
       if (res.ok) {
-        const data = await res.json();
+        let data = await res.json();
+
+        data = await Promise.all(
+          data.map(async (file) => {
+            if (
+              isImageSearch ||
+              (file.type && file.type.match(/jpg|jpeg|png|webp|gif/i))
+            ) {
+              try {
+                const viewRes = await fetch(`/api/cloud/files/${file.id}/view`);
+                if (viewRes.ok) {
+                  const viewData = await viewRes.json();
+                  return { ...file, url: viewData.url };
+                }
+              } catch (e) {
+                console.error('Failed to get view URL for', file.id);
+              }
+            }
+            return file;
+          }),
+        );
+
         console.log('Fetched related files:', data);
         setRelatedFiles(data);
       } else {
@@ -327,9 +349,22 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
                   onClick={() => {
                     // Potential future action: open file preview
                     console.log('Clicked file:', file.name);
+                    if (file.url) {
+                      window.open(file.url, '_blank');
+                    }
                   }}
                 >
-                  <div className="mr-3 text-lg">{getFileIcon(file.type)}</div>
+                  <div className="mr-3 text-lg">
+                    {file.url ? (
+                      <img
+                        src={file.url}
+                        alt={file.name}
+                        className="w-10 h-10 object-cover rounded"
+                      />
+                    ) : (
+                      getFileIcon(file.type)
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p
                       className="text-sm font-medium text-gray-900 truncate"

@@ -9,6 +9,11 @@ import Chatbot from '../dashboard/Chatbot';
 import ShareModal from './ShareModal';
 import FilePreviewModal from './FilePreviewModal';
 import OrgShareModal from './OrgShareModal';
+import {
+  isImageUploadFile,
+  triggerClipIndex,
+  triggerDocumentIngestion,
+} from '@/lib/uploadIndexing';
 
 export default function CloudManager({ activeSidebarItem }) {
   const [items, setItems] = useState([]);
@@ -233,19 +238,9 @@ export default function CloudManager({ activeSidebarItem }) {
 
   const triggerIngestion = async (file, userId, fileId) => {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('user_id', userId);
-      formData.append('file_id', fileId);
-
-      const ingestRes = await fetch('http://127.0.0.1:8000/api/v1/ingest', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (ingestRes.ok) {
-        const ingestData = await ingestRes.json();
-        toast.success(ingestData.message || 'File ingested successfully');
+      const result = await triggerDocumentIngestion(file, userId, fileId);
+      if (result.ok) {
+        toast.success(result.message);
       } else {
         toast.warning('File uploaded, but ingestion failed');
       }
@@ -293,9 +288,25 @@ export default function CloudManager({ activeSidebarItem }) {
         const fileData = await metaRes.json();
         const fileId = fileData.id;
 
-        // 4. Fire-and-Forget Ingestion (if userId exists)
+        // 4. Images → CLIP index; other files → document ingest
         if (session?.user?.id && fileId) {
-          triggerIngestion(file, session.user.id, fileId);
+          if (isImageUploadFile(file)) {
+            void (async () => {
+              try {
+                const data = await triggerClipIndex(
+                  file,
+                  session.user.id,
+                  fileId,
+                );
+                toast.success(data?.message || 'Image indexed successfully');
+              } catch (e) {
+                console.error('CLIP index error:', e);
+                toast.warning('File uploaded, but image indexing failed');
+              }
+            })();
+          } else {
+            triggerIngestion(file, session.user.id, fileId);
+          }
         }
       } catch (e) {
         console.error('Upload failed for ' + file.name, e);
