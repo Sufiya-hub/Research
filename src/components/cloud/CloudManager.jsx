@@ -9,6 +9,7 @@ import Chatbot from '../dashboard/Chatbot';
 import ShareModal from './ShareModal';
 import FilePreviewModal from './FilePreviewModal';
 import OrgShareModal from './OrgShareModal';
+import TempLinkModal from './TempLinkModal';
 import {
   isImageUploadFile,
   triggerClipIndex,
@@ -29,6 +30,7 @@ export default function CloudManager({ activeSidebarItem }) {
   const [shareModalFile, setShareModalFile] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
   const [orgShareFile, setOrgShareFile] = useState(null);
+  const [tempLinkFile, setTempLinkFile] = useState(null);
 
   const { data: session } = useSession();
   const [userOrganizations, setUserOrganizations] = useState([]);
@@ -602,6 +604,7 @@ export default function CloudManager({ activeSidebarItem }) {
             onPreview={handlePreview}
             onToggleFavorite={toggleFavorite}
             onAddToOrganization={handleAddToOrganization}
+            onGenerateTempLink={(file) => setTempLinkFile(file)}
           />
         )}
       </div>
@@ -616,6 +619,12 @@ export default function CloudManager({ activeSidebarItem }) {
         <FilePreviewModal
           file={previewFile}
           onClose={() => setPreviewFile(null)}
+        />
+      )}
+      {tempLinkFile && (
+        <TempLinkModal
+          file={tempLinkFile}
+          onClose={() => setTempLinkFile(null)}
         />
       )}
       {orgShareFile && userOrganizations.length > 0 && (

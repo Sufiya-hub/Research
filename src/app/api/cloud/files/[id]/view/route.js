@@ -23,6 +23,8 @@ export async function GET(request, { params }) {
     const { id: fileId } = await params;
     const { searchParams } = new URL(request.url);
     const download = searchParams.get('download') === 'true';
+    const expiresInParam = searchParams.get('expiresIn');
+    const expiresIn = expiresInParam ? parseInt(expiresInParam, 10) : 3600;
     const userId = session.user.id;
 
     // Fetch file if owned by user
@@ -61,7 +63,10 @@ export async function GET(request, { params }) {
         .from(organizationFiles)
         .innerJoin(
           organizationMembers,
-          eq(organizationFiles.organizationId, organizationMembers.organizationId),
+          eq(
+            organizationFiles.organizationId,
+            organizationMembers.organizationId,
+          ),
         )
         .where(
           and(
@@ -98,8 +103,8 @@ export async function GET(request, { params }) {
 
     const command = new GetObjectCommand(commandParams);
 
-    // URL valid for 1 hour
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    // URL valid for specified time, defaults to 1 hour
+    const url = await getSignedUrl(s3Client, command, { expiresIn: expiresIn });
 
     return NextResponse.json({
       url,

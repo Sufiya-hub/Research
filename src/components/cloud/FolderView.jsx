@@ -28,6 +28,7 @@ export default function FolderView({
   viewMode = 'grid',
   onToggleFavorite,
   onAddToOrganization,
+  onGenerateTempLink,
 }) {
   const containerRef = useRef(null);
   const [selectionBox, setSelectionBox] = useState(null); // { startX, startY, endX, endY }
@@ -278,6 +279,17 @@ export default function FolderView({
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
               >
                 Add to organization
+              </button>
+            )}
+            {onGenerateTempLink && contextMenu.item.type !== 'folder' && (
+              <button
+                onClick={() => {
+                  onGenerateTempLink(contextMenu.item);
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+              >
+                Generate temporary link
               </button>
             )}
             {onToggleFavorite && contextMenu.item.type !== 'folder' && (
