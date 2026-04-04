@@ -104,6 +104,19 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
         } else {
           setRelatedFiles([]);
         }
+
+        // Save to summarization history
+        if (result?.answer && query && searchMode === 'smart') {
+          try {
+            await fetch('/api/ai/summarizations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query, response: result.answer }),
+            });
+          } catch (e) {
+            console.error('Failed to save summarization history:', e);
+          }
+        }
       })
       .catch((error) => console.error(error));
   };

@@ -517,7 +517,7 @@ export default function CloudManager({ activeSidebarItem }) {
           </button>
           <button
             onClick={() => document.getElementById('cloud-upload').click()}
-            className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium transition-colors shadow-sm"
+            className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium transition-colors shadow-sm"
           >
             Upload
           </button>

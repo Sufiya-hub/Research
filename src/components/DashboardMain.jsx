@@ -6,6 +6,7 @@ import CloudManager from './cloud/CloudManager';
 import AccountSecuritySettings from './settings/AccountSecuritySettings';
 import StorageLimitsSettings from './settings/StorageLimitsSettings';
 import OrganizationsPage from './settings/OrganizationsPage';
+import SummarizationHistory from './dashboard/SummarizationHistory';
 
 import { useSession } from 'next-auth/react';
 import Chatbot from './dashboard/Chatbot';
@@ -49,6 +50,8 @@ const DashboardMain = ({
           <StorageLimitsSettings />
         ) : activeItem === 'Organizations' || isOrgDetail ? (
           <OrganizationsPage activeOrgId={activeOrgId} />
+        ) : activeItem === 'Summarization History' ? (
+          <SummarizationHistory />
         ) : (
           <CloudManager activeSidebarItem={activeItem} />
         )}

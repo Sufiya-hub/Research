@@ -77,8 +77,8 @@ export const files = pgTable(
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  lastAccessedAt: timestamp('last_accessed_at').defaultNow().notNull(),
-  isFavorite: boolean('is_favorite').default(false).notNull(),
+    lastAccessedAt: timestamp('last_accessed_at').defaultNow().notNull(),
+    isFavorite: boolean('is_favorite').default(false).notNull(),
   },
   (table) => ({
     // NORMAL index (not unique) → one user can have many files
@@ -153,7 +153,9 @@ export const organizations = pgTable(
   },
   (table) => ({
     orgKeyIndex: index('organizations_org_key_idx').on(table.orgKey),
-    creatorIndex: index('organizations_created_by_idx').on(table.createdByUserId),
+    creatorIndex: index('organizations_created_by_idx').on(
+      table.createdByUserId,
+    ),
   }),
 );
 
@@ -240,6 +242,28 @@ export const organizationJoinRequests = pgTable(
     orgUserIdx: index('organization_join_requests_org_user_idx').on(
       table.organizationId,
       table.userId,
+    ),
+  }),
+);
+
+/**
+ * Summarization History Table
+ */
+export const summarizationHistory = pgTable(
+  'summarization_history',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    query: text('query').notNull(),
+    response: text('response').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIndex: index('summarization_history_user_idx').on(table.userId),
+    createdAtIndex: index('summarization_history_created_at_idx').on(
+      table.createdAt,
     ),
   }),
 );
