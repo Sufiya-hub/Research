@@ -70,6 +70,32 @@ export async function POST(request) {
       sharedWithUserId: recipientUser.id,
     });
 
+    // 5. Update Friends List
+    const currentUserReq = await db
+      .select({ friends: users.friends })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    let friends = currentUserReq[0]?.friends || [];
+
+    if (!Array.isArray(friends)) {
+      friends = [];
+    }
+
+    const friendExists = friends.some((f) => f.email === recipientUser.email);
+    if (!friendExists) {
+      friends.push({
+        id: recipientUser.id,
+        email: recipientUser.email,
+        fullName: recipientUser.fullName || '',
+      });
+      await db
+        .update(users)
+        .set({ friends })
+        .where(eq(users.id, session.user.id));
+    }
+
     return NextResponse.json({ message: 'File shared successfully' });
   } catch (error) {
     console.error('Error sharing file:', error);

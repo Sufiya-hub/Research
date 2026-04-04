@@ -4,6 +4,7 @@ import {
   FaFile,
   FaFilePdf,
   FaFileImage,
+  FaImage,
   FaFileCode,
   FaFileCsv,
   FaFileLines,
@@ -17,6 +18,7 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
   const [relatedFiles, setRelatedFiles] = useState([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [searchMode, setSearchMode] = useState('manual'); // 'smart' | 'manual'
+  const [isImageSearch, setIsImageSearch] = useState(false);
   const { data: session } = useSession();
 
   const sendQuery = async () => {
@@ -91,11 +93,33 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
     //   }
     // }, 1000);
 
-    fetch('http://127.0.0.1:8000/api/v1/query', requestOptions)
+    const isClipSearch = searchMode === 'smart' && isImageSearch;
+    const apiUrl = isClipSearch
+      ? 'http://127.0.0.1:8000/api/v1/clip/search'
+      : 'http://127.0.0.1:8000/api/v1/query';
+
+    const smartRaw = isClipSearch
+      ? JSON.stringify({
+          query: query,
+          top_k: 5,
+        })
+      : raw;
+
+    const smartRequestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: smartRaw,
+      redirect: 'follow',
+    };
+
+    fetch(apiUrl, smartRequestOptions)
       .then((response) => response.json())
       .then(async (result) => {
-        console.log(result);
-        setResponse(result?.answer);
+        console.log('API Result:', result);
+        setResponse(
+          result?.answer ||
+            (isClipSearch ? 'Image search results loaded.' : ''),
+        );
 
         // Handle Valid File IDs
         if (result?.file_ids && Array.isArray(result.file_ids)) {
@@ -194,7 +218,11 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
             <input
               type="text"
               placeholder={
-                searchMode === 'smart' ? 'Ask AI...' : 'Search files...'
+                searchMode === 'smart'
+                  ? !isImageSearch
+                    ? 'Smart Search using AI...'
+                    : 'Search Images using CLIP...'
+                  : 'Search files...'
               }
               className="outline-none w-full bg-transparent"
               value={query}
@@ -210,30 +238,55 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
             </button>
           </div>
         </form>
+
+        {searchMode === 'smart' && (
+          <button
+            type="button"
+            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-all focus:outline-none ${
+              isImageSearch
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-500'
+            }`}
+            title="Toggle Image Search"
+            onClick={() => setIsImageSearch(!isImageSearch)}
+          >
+            <FaImage className="w-5 h-5" />
+          </button>
+        )}
+
         <div
-          className={`relative w-12 h-6 rounded-full cursor-pointer transition-colors duration-300 ${searchMode === 'smart' ? 'bg-green-600' : 'bg-gray-400'}`}
+          className={`relative w-20 h-8 rounded-full cursor-pointer transition-colors duration-300 flex items-center shrink-0 ${searchMode === 'smart' ? 'bg-green-600' : 'bg-gray-400'}`}
           onClick={toggleSearchMode}
           title={
             searchMode === 'smart' ? 'Smart Search Mode' : 'Manual Search Mode'
           }
         >
-          <div
-            className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm ${searchMode === 'smart' ? 'translate-x-6' : 'translate-x-0'}`}
-          ></div>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-xs font-bold text-gray-500 w-12 text-center select-none">
+          {/* Label text inside the switch */}
+          <span
+            className={`absolute font-bold text-white transition-opacity duration-300 px-2 ${
+              searchMode === 'smart'
+                ? 'left-1 opacity-100 text-[10px]'
+                : 'right-1 top-1/3 opacity-100 text-[8px]'
+            }`}
+          >
             {searchMode === 'smart' ? 'SMART' : 'MANUAL'}
           </span>
-          {isFullscreen && (
-            <button
-              onClick={handleClose}
-              className="mt-1 text-xs text-red-500 hover:text-red-700 font-semibold underline"
-            >
-              Close
-            </button>
-          )}
+
+          <div
+            className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 shadow-sm z-10 ${
+              searchMode === 'smart' ? 'translate-x-12' : 'translate-x-0'
+            }`}
+          ></div>
         </div>
+
+        {isFullscreen && (
+          <button
+            onClick={handleClose}
+            className="text-xs text-red-500 hover:text-red-700 font-semibold underline shrink-0 transition-colors"
+          >
+            Close
+          </button>
+        )}
       </div>
       {/* CONTAINER FOR RESPONSE */}
       <div

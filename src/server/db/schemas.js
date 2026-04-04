@@ -7,6 +7,7 @@ import {
   boolean,
   index,
   uuid,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -27,6 +28,7 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   reset_token: text('reset_token'),
   reset_token_expires: timestamp('reset_token_expires'),
+  friends: jsonb('friends').default([]),
 });
 
 /**
