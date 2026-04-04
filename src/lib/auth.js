@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schemas';
 import { eq } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 
 export const authOptions = {
   session: {
@@ -74,6 +75,7 @@ export const authOptions = {
             .values({
               email: profile.email,
               fullName: profile.name,
+              password: randomUUID(),
             })
             .returning();
 
