@@ -93,10 +93,12 @@ const Chatbot = ({ onResponseGenerated, onClose, isFullscreen }) => {
     //   }
     // }, 1000);
 
+    const baseUrl =
+      process.env.NEXT_PUBLIC_INGESTION_API_URL || 'http://127.0.0.1:8000';
     const isClipSearch = searchMode === 'smart' && isImageSearch;
     const apiUrl = isClipSearch
-      ? 'http://127.0.0.1:8000/api/v1/clip/search'
-      : 'http://127.0.0.1:8000/api/v1/query';
+      ? `${baseUrl}/api/v1/clip/search`
+      : `${baseUrl}/api/v1/query`;
 
     const smartRaw = isClipSearch
       ? JSON.stringify({
