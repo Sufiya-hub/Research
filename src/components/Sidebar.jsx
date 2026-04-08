@@ -1,5 +1,5 @@
 // components/Sidebar.jsx (Updated to Hide Scrollbar)
-
+// This is a Sidebar
 import React, { useState, useEffect } from 'react';
 
 const Sidebar = ({ handleLogout, activeItem, handleItemClick, userName }) => {
